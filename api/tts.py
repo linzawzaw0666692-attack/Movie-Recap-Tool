@@ -1,15 +1,15 @@
 from http.server import BaseHTTPRequestHandler
 import json
-import asyncio
-import edge_tts
 import base64
 import re
+import io
+from gtts import gTTS
 
-VOICE_MAP = {
-    "thiha": "my-MM-ThihaNeural",
-    "nilar": "my-MM-NilarNeural"
+# gTTS မှာ my (Myanmar) language support ရှိသည်
+LANG_MAP = {
+    "thiha": "my",   # မြန်မာ (gTTS က gender မခွဲပါ)
+    "nilar": "my"
 }
-RATE = "+30%"
 
 def srt_time(seconds):
     h = int(seconds // 3600)
@@ -17,14 +17,6 @@ def srt_time(seconds):
     s = int(seconds % 60)
     ms = int((seconds % 1) * 1000)
     return f"{h:02d}:{m:02d}:{s:02d},{ms:03d}"
-
-async def synth_line(text, voice):
-    communicate = edge_tts.Communicate(text, voice, rate=RATE)
-    audio = b""
-    async for chunk in communicate.stream():
-        if chunk["type"] == "audio":
-            audio += chunk["data"]
-    return audio
 
 class handler(BaseHTTPRequestHandler):
     def do_OPTIONS(self):
@@ -41,7 +33,7 @@ class handler(BaseHTTPRequestHandler):
             
             text = body.get("text", "").strip()
             voice_key = body.get("voice", "thiha")
-            voice = VOICE_MAP.get(voice_key, VOICE_MAP["thiha"])
+            lang = LANG_MAP.get(voice_key, "my")
             
             if not text:
                 self._json_response(400, {"error": "စာသား ထည့်ပါ"})
@@ -53,31 +45,41 @@ class handler(BaseHTTPRequestHandler):
                 self._json_response(400, {"error": "စာကြောင်း မရှိပါ"})
                 return
             
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            
-            audio_all = b""
+            audio_all = io.BytesIO()
             segments = []
             current = 0
             
             for line in lines:
-                audio = loop.run_until_complete(synth_line(line, voice))
-                audio_all += audio
+                # gTTS က slow=False → ပုံမှန် speed
+                # Fast vibe အတွက် frontend မှာ audio playback rate ချိန်
+                tts = gTTS(text=line, lang=lang, slow=False)
+                buf = io.BytesIO()
+                tts.write_to_fp(buf)
+                buf.seek(0)
+                audio_all.write(buf.read())
+                
+                # Duration ခန့်မှန်း
                 char_count = len(line.replace(" ", ""))
-                duration = max(char_count / 6.5, 1.2)
-                segments.append({"start": current, "end": current + duration, "text": line})
+                duration = max(char_count / 6.0, 1.2)
+                
+                segments.append({
+                    "start": current,
+                    "end": current + duration,
+                    "text": line
+                })
                 current += duration
-            
-            loop.close()
             
             srt = ""
             for i, seg in enumerate(segments, 1):
                 srt += f"{i}\n{srt_time(seg['start'])} --> {srt_time(seg['end'])}\n{seg['text']}\n\n"
             
+            audio_bytes = audio_all.getvalue()
+            
             self._json_response(200, {
-                "audio": base64.b64encode(audio_all).decode(),
+                "audio": base64.b64encode(audio_bytes).decode(),
                 "srt": srt,
-                "duration": current
+                "duration": current,
+                "speed": 1.3  # frontend က playback rate 1.3x သတ်မှတ်ရန်
             })
         
         except Exception as e:
