@@ -228,18 +228,6 @@
       white-space: nowrap;
     }
     .mini-btn:hover { background: #3a3a52; color: #fff; }
-    .mini-btn.gold {
-      background: #ffd93d22;
-      color: #ffd93d;
-      border: 1px solid #ffd93d55;
-    }
-    .mini-btn.gold:hover { background: #ffd93d33; }
-    .mini-btn.green {
-      background: #6bcb7722;
-      color: #6bcb77;
-      border: 1px solid #6bcb7755;
-    }
-    .mini-btn.green:hover { background: #6bcb7733; }
 
     /* ===== Character Box ===== */
     .char-box {
@@ -273,13 +261,6 @@
       color: #8a8aa5;
       line-height: 1.7;
       margin-bottom: 14px;
-    }
-    .char-box-hint code {
-      background: #12121c;
-      padding: 2px 6px;
-      border-radius: 4px;
-      color: #6bcb77;
-      font-size: 11px;
     }
 
     .auto-pair {
@@ -750,8 +731,8 @@
           <span class="feature-icon">🔊</span>
           <div class="feature-title">အသံထုတ်</div>
           <div class="feature-text">
-            Browser ထဲမှ Edge TTS သုံးပြီး မြန်မာစာသားမှ အသံဖိုင် (MP3)
-            နှင့် SRT ဖိုင် တစ်ခါတည်း ထုတ်ယူပါ။ <b>Thiha</b> / <b>Nilar</b>၊ Speed 1.3x။
+            Edge TTS သုံးပြီး မြန်မာစာသားမှ အသံဖိုင် (MP3) နှင့် SRT ဖိုင်
+            တစ်ခါတည်း ထုတ်ယူပါ။ <b>Thiha</b> / <b>Nilar</b>၊ Speed 1.3x။
           </div>
           <div class="feature-cta">စတင်မယ် →</div>
         </div>
@@ -837,7 +818,7 @@
 
         <div class="voice-info-bar">
           <span class="speed-badge">⚡ Speed 1.3x (Fast Vibe)</span>
-          <span class="note">Edge TTS · Browser Direct · No Backend</span>
+          <span class="note">Edge TTS Engine · my-MM Neural Voice</span>
         </div>
       </div>
 
@@ -897,15 +878,8 @@
     const API_MODEL = 'gemini-3.5-flash-lite';
     const API_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models';
 
-    // ✅ Backend မလိုတော့ပါ — Browser ထဲက Edge TTS ကို တိုက်ရိုက်ခေါ်မယ်
-    const EDGE_TTS_ENDPOINT = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
-    const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-
-    // Edge TTS voice names (my-MM)
-    const EDGE_VOICES = {
-      thiha: 'my-MM-ThihaNeural',
-      nilar: 'my-MM-NilarNeural'
-    };
+    // ✅ Vercel Serverless Function — root/api/tts.js
+    const TTS_API = '/api/tts';
 
     let currentMode = 'fast';
     let selectedVoice = 'thiha';
@@ -954,7 +928,7 @@
         voiceBox.classList.add('visible');
         apiBox.style.display = 'none';
         wsLabel.textContent = 'အသံထုတ်';
-        modelTag.textContent = 'Edge TTS (Browser)';
+        modelTag.textContent = 'Edge TTS';
         srcTitle.textContent = 'မြန်မာစာသား (အသံထုတ်ရန်)';
         resTitle.textContent = 'SRT Preview';
         srcSel.style.display = 'none';
@@ -1239,211 +1213,7 @@ ${text}
       }
     }
 
-    // ============================================================
-    //  EDGE TTS — Browser Direct (No Backend)
-    // ============================================================
-
-    // Microsoft Edge TTS အတွက် Sec-MS-GEC token generate
-    function generateSecMsGec() {
-      // Windows file time (100-nanosecond intervals since 1601-01-01)
-      const WIN_EPOCH = 11644473600n; // seconds between 1601 and 1970
-      const S_TO_NS = 10000000n;       // 100-ns intervals per second
-
-      let ticks = BigInt(Math.floor(Date.now() / 1000)) + WIN_EPOCH;
-      ticks = ticks * S_TO_NS;
-
-      // Round down to nearest 5 minutes (300 seconds)
-      const roundedTicks = (ticks / (300n * S_TO_NS)) * (300n * S_TO_NS);
-
-      // SHA-256 hash of (ticks + trusted client token)
-      const str = roundedTicks.toString() + TRUSTED_CLIENT_TOKEN;
-      return sha256Hex(str).toUpperCase();
-    }
-
-    // SHA-256 (synchronous မဟုတ် — async)
-    async function sha256Hex(str) {
-      const encoder = new TextEncoder();
-      const data = encoder.encode(str);
-      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-      const hashArray = Array.from(new Uint8Array(hashBuffer));
-      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-    }
-
-    async function buildEdgeWSUrl() {
-      const connectionId = generateUUID().replace(/-/g, '');
-      const secMsGec = await generateSecMsGec();
-
-      const url = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` +
-        `?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}` +
-        `&Sec-MS-GEC=${secMsGec}` +
-        `&Sec-MS-GEC-Version=1-130.0.2849.68` +
-        `&ConnectionId=${connectionId}`;
-      return { url, requestId: generateUUID().replace(/-/g, '') };
-    }
-
-    function buildSSML(text, voiceName) {
-      const escaped = text
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&apos;');
-
-      return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='my-MM'>
-        <voice name='${voiceName}'>
-          <prosody rate='+30%' pitch='+0Hz'>
-            ${escaped}
-          </prosody>
-        </voice>
-      </speak>`;
-    }
-
-    // Edge TTS WebSocket ဖြင့် အသံထုတ်
-    function synthesizeWithEdgeTTS(wsInfo, ssml) {
-      return new Promise((resolve, reject) => {
-        const audioChunks = [];
-        const srtLines = [];
-        let srtIndex = 1;
-
-        const ws = new WebSocket(wsInfo.url);
-        ws.binaryType = 'arraybuffer';
-
-        const timeout = setTimeout(() => {
-          try { ws.close(); } catch (e) {}
-          reject(new Error('TTS timeout — 30 စက္ကန့်ကျော်သွားသည်'));
-        }, 30000);
-
-        ws.onopen = () => {
-          // 1) speech.config
-          const configMsg =
-            `X-Timestamp:${new Date().toString()}\r\n` +
-            `Content-Type:application/json; charset=utf-8\r\n` +
-            `Path:speech.config\r\n\r\n` +
-            `{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"true","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`;
-          ws.send(configMsg);
-
-          // 2) SSML
-          const ssmlMsg =
-            `X-RequestId:${wsInfo.requestId}\r\n` +
-            `Content-Type:application/ssml+xml\r\n` +
-            `X-Timestamp:${new Date().toString()}Z\r\n` +
-            `Path:ssml\r\n\r\n${ssml}`;
-          ws.send(ssmlMsg);
-        };
-
-        ws.onmessage = (event) => {
-          if (typeof event.data === 'string') {
-            const data = event.data;
-
-            // Sentence boundary metadata
-            if (data.includes('Path:audio.metadata')) {
-              try {
-                const jsonStart = data.indexOf('{');
-                if (jsonStart > -1) {
-                  const meta = JSON.parse(data.substring(jsonStart));
-                  if (meta.Metadata) {
-                    meta.Metadata.forEach(m => {
-                      if (m.Type === 'SentenceBoundary' && m.Data) {
-                        const offsetSec = m.Data.Offset / 10000000;
-                        const durationSec = m.Data.Duration / 10000000;
-                        const textVal = m.Data.text?.Text || m.Data.text || '';
-                        if (textVal) {
-                          srtLines.push({
-                            index: srtIndex++,
-                            start: offsetSec,
-                            end: offsetSec + durationSec,
-                            text: textVal
-                          });
-                        }
-                      }
-                    });
-                  }
-                }
-              } catch (e) { /* ignore */ }
-            }
-
-            // Turn end — ပြီးဆုံး
-            if (data.includes('Path:turn.end')) {
-              clearTimeout(timeout);
-              try { ws.close(); } catch (e) {}
-
-              const totalLen = audioChunks.reduce((s, c) => s + c.byteLength, 0);
-              const merged = new Uint8Array(totalLen);
-              let offset = 0;
-              audioChunks.forEach(c => {
-                merged.set(new Uint8Array(c), offset);
-                offset += c.byteLength;
-              });
-
-              resolve({
-                audio: merged.buffer,
-                srt: srtLines.length > 0 ? formatSrt(srtLines) : null
-              });
-            }
-          } else {
-            // Binary — audio data
-            const view = new DataView(event.data);
-            const headerLen = view.getUint16(0);
-            const audioStart = 2 + headerLen;
-            const audioBytes = event.data.slice(audioStart);
-            if (audioBytes.byteLength > 0) {
-              audioChunks.push(audioBytes);
-            }
-          }
-        };
-
-        ws.onerror = (err) => {
-          clearTimeout(timeout);
-          console.error('WebSocket error:', err);
-          reject(new Error('WebSocket ချိတ်ဆက်မှု မအောင်မြင်ပါ — CORS/Network စစ်ပါ'));
-        };
-
-        ws.onclose = (event) => {
-          clearTimeout(timeout);
-          if (audioChunks.length === 0) {
-            reject(new Error(`WebSocket ပိတ်သွားသည် (code: ${event.code}) — အသံမရရှိပါ`));
-          }
-        };
-      });
-    }
-
-    // ============ Web Speech API Fallback ============
-    function synthesizeWithWebSpeech(text, voice) {
-      return new Promise((resolve, reject) => {
-        if (!('speechSynthesis' in window)) {
-          reject(new Error('သင့် browser က Web Speech API ကို မထောက်ပံ့ပါ'));
-          return;
-        }
-
-        speechSynthesis.cancel();
-
-        const voices = speechSynthesis.getVoices();
-        const mmVoices = voices.filter(v => v.lang.startsWith('my') || v.lang.includes('MM'));
-
-        let selectedVoiceObj = null;
-        if (mmVoices.length > 0) {
-          if (voice === 'thiha') {
-            selectedVoiceObj = mmVoices.find(v => /male|thiha|သိဟ/i.test(v.name)) || mmVoices[0];
-          } else {
-            selectedVoiceObj = mmVoices.find(v => /female|nilar|နီလာ/i.test(v.name)) || mmVoices[mmVoices.length - 1];
-          }
-        }
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        if (selectedVoiceObj) utterance.voice = selectedVoiceObj;
-        utterance.lang = 'my-MM';
-        utterance.rate = 1.3;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
-
-        utterance.onend = () => resolve({ fallback: true });
-        utterance.onerror = (e) => reject(new Error('Web Speech Error: ' + e.error));
-
-        speechSynthesis.speak(utterance);
-      });
-    }
-
-    // ============ Voice Generation ============
+    // ============ Voice Generation (Vercel Serverless Backend) ============
     async function generateVoice() {
       const text = sourceText.value.trim();
 
@@ -1468,26 +1238,35 @@ ${text}
       audioData.srt = null;
       audioData.blob = null;
 
-      const voiceName = EDGE_VOICES[selectedVoice] || EDGE_VOICES.thiha;
-
       try {
-        // ✅ နည်းလမ်း ၁ — Edge TTS (browser direct)
-        const wsInfo = await buildEdgeWSUrl();
-        const ssml = buildSSML(text, voiceName);
-        const result = await synthesizeWithEdgeTTS(wsInfo, ssml);
+        const response = await fetch(TTS_API, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            text: text,
+            voice: selectedVoice
+          })
+        });
 
-        if (!result.audio || result.audio.byteLength === 0) {
-          throw new Error('Edge TTS အသံမရရှိပါ');
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.error || `HTTP ${response.status}`);
         }
 
-        // Success — MP3 + SRT
-        audioData.base64 = arrayBufferToBase64(result.audio);
-        audioData.srt = result.srt || generateSrtFromText(text);
-        audioData.blob = new Blob([result.audio], { type: 'audio/mpeg' });
+        const data = await response.json();
 
+        if (!data.audio) throw new Error('အသံဖိုင် မရရှိပါ');
+
+        // Base64 → Blob
+        audioData.base64 = data.audio;
+        audioData.srt = data.srt || generateSrtFromText(text);
+        audioData.blob = base64ToBlob(data.audio, 'audio/mpeg');
+
+        // SRT preview
         resultText.value = audioData.srt;
         resultCount.textContent = audioData.srt.length + ' လုံး';
 
+        // Audio player
         audioData.url = URL.createObjectURL(audioData.blob);
         const player = document.getElementById('audioPlayer');
         player.src = audioData.url;
@@ -1498,39 +1277,19 @@ ${text}
         });
 
         document.getElementById('audioResult').classList.add('visible');
-        document.getElementById('downloadMp3Btn').disabled = false;
 
-        setStatus('✅ Edge TTS · MP3 + SRT အဆင်သင့် · Speed 1.3x', 'success');
+        // MP3 download button ဖွင့်
+        const mp3Btn = document.getElementById('downloadMp3Btn');
+        if (mp3Btn) mp3Btn.disabled = false;
 
-      } catch (edgeError) {
-        console.warn('Edge TTS မအောင်မြင်၊ Web Speech API သို့ ပြောင်း:', edgeError);
+        setStatus('✅ အသံထုတ်ပြီးပါပြီ · MP3 + SRT အဆင်သင့် · Speed 1.3x', 'success');
 
-        // ✅ နည်းလမ်း ၂ — Web Speech API (fallback)
-        try {
-          setStatus('<span class="spinner"></span> Edge TTS မရပါ — Browser Voice သုံးနေသည်...', 'loading');
-
-          const srt = generateSrtFromText(text);
-          audioData.srt = srt;
-          audioData.base64 = null;
-          audioData.blob = null;
-
-          resultText.value = srt;
-          resultCount.textContent = srt.length + ' လုံး';
-
-          // Player ဖျောက် (Web Speech API က blob မပေး)
-          const player = document.getElementById('audioPlayer');
-          player.style.display = 'none';
-
-          document.getElementById('audioResult').classList.add('visible');
-          document.getElementById('downloadMp3Btn').disabled = true;
-
-          await synthesizeWithWebSpeech(text, selectedVoice);
-
-          setStatus('✅ Browser Voice ဖြင့် အသံဖတ်ပြီးပါပြီ · SRT download ရနိုင် · Speed 1.3x', 'success');
-
-        } catch (fallbackError) {
-          console.error('Fallback error:', fallbackError);
-          setStatus('❌ Error: ' + fallbackError.message, 'error');
+      } catch (error) {
+        console.error('TTS Error:', error);
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          setStatus('❌ Backend server မရနိုင်ပါ။ Vercel deploy စစ်ပါ။', 'error');
+        } else {
+          setStatus('❌ Error: ' + error.message, 'error');
         }
       } finally {
         voiceBtn.disabled = false;
@@ -1568,24 +1327,6 @@ ${text}
     }
 
     // ============ Utils ============
-    function generateUUID() {
-      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-        const r = Math.random() * 16 | 0;
-        const v = c === 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-      });
-    }
-
-    function arrayBufferToBase64(buffer) {
-      const bytes = new Uint8Array(buffer);
-      let binary = '';
-      const chunk = 0x8000;
-      for (let i = 0; i < bytes.length; i += chunk) {
-        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
-      }
-      return btoa(binary);
-    }
-
     function base64ToBlob(base64, mime) {
       const byteChars = atob(base64);
       const byteNums = new Array(byteChars.length);
@@ -1597,7 +1338,7 @@ ${text}
 
     function downloadAudio() {
       if (!audioData.blob) {
-        setStatus('⚠️ MP3 ဖိုင် မရနိုင်ပါ — Browser Voice mode ဖြစ်နေသည်', 'error');
+        setStatus('⚠️ MP3 ဖိုင် မရနိုင်ပါ', 'error');
         return;
       }
       triggerDownload(audioData.blob, `recap_${selectedVoice}_${Date.now()}.mp3`);
@@ -1627,12 +1368,6 @@ ${text}
         else translateText();
       }
     });
-
-    // Voice list load (Web Speech API)
-    if ('speechSynthesis' in window) {
-      speechSynthesis.onvoiceschanged = () => {};
-      speechSynthesis.getVoices();
-    }
 
     if (location.hash === '#workspace-fast') enterWorkspace('fast');
     else if (location.hash === '#workspace-recap') enterWorkspace('recap');
