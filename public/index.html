@@ -1267,6 +1267,12 @@ ${text}
         const audioUrl = URL.createObjectURL(audioBlob);
         const player = document.getElementById('audioPlayer');
         player.src = audioUrl;
+        
+        // Fast vibe — 1.3x playback speed
+        player.playbackRate = 1.3;
+        player.addEventListener('loadedmetadata', () => {
+          player.playbackRate = 1.3;
+        });
 
         document.getElementById('audioResult').classList.add('visible');
 
