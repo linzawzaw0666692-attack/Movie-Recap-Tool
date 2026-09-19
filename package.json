@@ -1,8 +1,0 @@
-{
-  "name": "Movie-Recap-Tool",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "edge-tts-api": "^1.0.0"
-  }
-}
