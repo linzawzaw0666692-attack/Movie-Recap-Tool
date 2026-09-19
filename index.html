@@ -42,6 +42,7 @@
       color: #6bb0ff;
       font-size: 13px;
       margin-bottom: 24px;
+      letter-spacing: 0.5px;
     }
 
     .landing-title {
@@ -85,7 +86,22 @@
       padding: 26px 22px;
       cursor: pointer;
       transition: 0.25s;
+      position: relative;
+      overflow: hidden;
     }
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      transition: opacity 0.25s;
+      pointer-events: none;
+    }
+    .feature-card.fast::before { background: linear-gradient(135deg, #4d96ff22, transparent); }
+    .feature-card.recap::before { background: linear-gradient(135deg, #ffd93d22, #ff6b6b11, transparent); }
+    .feature-card.voice::before { background: linear-gradient(135deg, #6bcb7722, #4d96ff11, transparent); }
+    .feature-card:hover::before { opacity: 1; }
+
     .feature-card:hover {
       border-color: #4d96ff66;
       transform: translateY(-5px);
@@ -109,10 +125,15 @@
     .feature-cta {
       font-size: 13px;
       font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: gap 0.25s;
     }
     .feature-card.fast .feature-cta { color: #4d96ff; }
     .feature-card.recap .feature-cta { color: #ffd93d; }
     .feature-card.voice .feature-cta { color: #6bcb77; }
+    .feature-card:hover .feature-cta { gap: 12px; }
 
     /* ===== Workspace ===== */
     .topbar {
@@ -138,6 +159,7 @@
       font-size: 14px;
       cursor: pointer;
       font-family: inherit;
+      transition: 0.2s;
     }
     .back-btn:hover { background: #3a3a52; }
     .topbar-title { font-size: 17px; font-weight: 700; color: #e8e8f0; }
@@ -146,6 +168,7 @@
       padding: 3px 10px;
       border-radius: 20px;
       margin-left: 8px;
+      vertical-align: middle;
     }
     .mode-tag.fast { color: #4d96ff; background: #4d96ff1a; border: 1px solid #4d96ff44; }
     .mode-tag.recap { color: #ffd93d; background: #ffd93d1a; border: 1px solid #ffd93d44; }
@@ -158,6 +181,7 @@
       padding: 3px 10px;
       border-radius: 20px;
       margin-left: 6px;
+      vertical-align: middle;
     }
 
     .workspace {
@@ -177,7 +201,7 @@
       flex-wrap: wrap;
       align-items: center;
     }
-    .api-box label { font-size: 13px; color: #a0a0b8; }
+    .api-box label { font-size: 13px; color: #a0a0b8; white-space: nowrap; }
     .api-box input {
       flex: 1;
       min-width: 180px;
@@ -200,6 +224,8 @@
       font-size: 13px;
       cursor: pointer;
       font-family: inherit;
+      transition: 0.2s;
+      white-space: nowrap;
     }
     .mini-btn:hover { background: #3a3a52; color: #fff; }
     .mini-btn.gold {
@@ -207,8 +233,182 @@
       color: #ffd93d;
       border: 1px solid #ffd93d55;
     }
+    .mini-btn.gold:hover { background: #ffd93d33; }
+    .mini-btn.green {
+      background: #6bcb7722;
+      color: #6bcb77;
+      border: 1px solid #6bcb7755;
+    }
+    .mini-btn.green:hover { background: #6bcb7733; }
 
-    /* Voice Box */
+    /* ===== Character Box ===== */
+    .char-box {
+      background: #1c1c2c;
+      border: 1px solid #ffd93d44;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .char-box.visible { display: block; animation: fadeIn 0.35s ease; }
+
+    .char-box-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .char-box-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #ffd93d;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .char-box-hint {
+      font-size: 12px;
+      color: #8a8aa5;
+      line-height: 1.7;
+      margin-bottom: 14px;
+    }
+    .char-box-hint code {
+      background: #12121c;
+      padding: 2px 6px;
+      border-radius: 4px;
+      color: #6bcb77;
+      font-size: 11px;
+    }
+
+    .auto-pair {
+      background: #12121c;
+      border: 1px solid #2e2e44;
+      border-radius: 10px;
+      padding: 14px;
+      margin-bottom: 14px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 620px) { .auto-pair { grid-template-columns: 1fr; } }
+
+    .auto-card { display: flex; flex-direction: column; gap: 8px; }
+    .auto-card-label {
+      font-size: 12px;
+      font-weight: 700;
+      color: #a0a0b8;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .auto-card-label .badge {
+      background: #4d96ff22;
+      color: #6bb0ff;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 10px;
+      font-weight: 700;
+      border: 1px solid #4d96ff44;
+    }
+    .auto-card-label .badge.pink {
+      background: #ff6b9d22;
+      color: #ff6b9d;
+      border-color: #ff6b9d44;
+    }
+
+    .auto-card input {
+      padding: 10px 14px;
+      background: #1c1c2c;
+      border: 1px solid #3a3a52;
+      border-radius: 8px;
+      color: #ffd93d;
+      font-size: 15px;
+      font-family: inherit;
+      font-weight: 700;
+      width: 100%;
+    }
+    .auto-card input:focus { outline: none; border-color: #ffd93d; }
+
+    .other-title {
+      font-size: 13px;
+      color: #a0a0b8;
+      font-weight: 700;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .other-title::before, .other-title::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: #2e2e44;
+    }
+
+    .char-list { display: flex; flex-direction: column; gap: 10px; }
+    .char-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr auto;
+      gap: 10px;
+      align-items: center;
+    }
+    @media (max-width: 720px) {
+      .char-row {
+        grid-template-columns: 1fr;
+        background: #12121c;
+        padding: 10px;
+        border-radius: 10px;
+      }
+      .char-row .arrow { display: none; }
+    }
+
+    .char-row input {
+      padding: 10px 14px;
+      background: #12121c;
+      border: 1px solid #3a3a52;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: inherit;
+      width: 100%;
+    }
+    .char-row input:focus { outline: none; border-color: #ffd93d; }
+    .char-row input::placeholder { color: #55556e; }
+
+    .arrow { color: #ffd93d; font-size: 16px; font-weight: bold; }
+
+    .del-btn {
+      background: #ff6b6b22;
+      color: #ff6b6b;
+      border: 1px solid #ff6b6b44;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+    }
+    .del-btn:hover { background: #ff6b6b33; }
+
+    .add-char-btn {
+      margin-top: 12px;
+      padding: 10px 18px;
+      background: #ffd93d1a;
+      color: #ffd93d;
+      border: 1px dashed #ffd93d66;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+      transition: 0.2s;
+      width: 100%;
+    }
+    .add-char-btn:hover { background: #ffd93d2a; border-style: solid; }
+
+    /* ===== Voice Box ===== */
     .voice-box {
       background: #1c1c2c;
       border: 1px solid #6bcb7744;
@@ -224,6 +424,9 @@
       font-weight: 700;
       color: #6bcb77;
       margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     .voice-grid {
@@ -240,10 +443,10 @@
       border-radius: 12px;
       padding: 16px;
       cursor: pointer;
+      transition: 0.25s;
       display: flex;
       align-items: center;
       gap: 12px;
-      transition: 0.25s;
     }
     .voice-option:hover { border-color: #6bcb7766; }
     .voice-option.selected {
@@ -270,8 +473,16 @@
     .voice-avatar.female { background: #ff6b9d22; border: 1px solid #ff6b9d55; }
 
     .voice-info { flex: 1; }
-    .voice-name { font-size: 14px; font-weight: 700; color: #e8e8f0; margin-bottom: 2px; }
-    .voice-desc { font-size: 11px; color: #8a8aa5; }
+    .voice-name {
+      font-size: 14px;
+      font-weight: 700;
+      color: #e8e8f0;
+      margin-bottom: 2px;
+    }
+    .voice-desc {
+      font-size: 11px;
+      color: #8a8aa5;
+    }
 
     .voice-info-bar {
       display: flex;
@@ -284,7 +495,7 @@
       font-size: 12px;
       flex-wrap: wrap;
     }
-    .speed-badge {
+    .voice-info-bar .speed-badge {
       background: #6bcb7722;
       color: #6bcb77;
       border: 1px solid #6bcb7755;
@@ -292,9 +503,11 @@
       border-radius: 20px;
       font-weight: 700;
     }
-    .note { color: #8a8aa5; }
+    .voice-info-bar .note {
+      color: #8a8aa5;
+    }
 
-    /* Panels */
+    /* ===== Panel Grid ===== */
     .panel-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -326,7 +539,13 @@
       align-items: center;
       gap: 6px;
     }
-    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4d96ff; box-shadow: 0 0 8px #4d96ff; }
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #4d96ff;
+      box-shadow: 0 0 8px #4d96ff;
+    }
     .dot.green { background: #6bcb77; box-shadow: 0 0 8px #6bcb77; }
 
     select {
@@ -339,6 +558,7 @@
       cursor: pointer;
       font-family: inherit;
     }
+    select:focus { outline: none; border-color: #4d96ff; }
 
     textarea {
       width: 100%;
@@ -389,6 +609,7 @@
     .btn-translate:disabled { opacity: 0.55; cursor: not-allowed; }
     .btn-translate.green {
       background: linear-gradient(90deg, #6bcb77, #4d96ff);
+      box-shadow: 0 8px 30px rgba(107, 203, 119, 0.3);
     }
 
     .btn-clear {
@@ -401,6 +622,7 @@
       background: transparent;
       cursor: pointer;
       font-family: inherit;
+      transition: 0.2s;
     }
     .btn-clear:hover { background: #2a2a3e; color: #fff; }
 
@@ -427,7 +649,7 @@
     }
     @keyframes spin { to { transform: rotate(360deg); } }
 
-    /* Audio Result */
+    /* ===== Audio Result ===== */
     .audio-result {
       background: #1c1c2c;
       border: 1px solid #6bcb7744;
@@ -443,6 +665,9 @@
       font-weight: 700;
       color: #6bcb77;
       margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
     }
 
     audio {
@@ -466,6 +691,7 @@
       font-weight: 700;
       cursor: pointer;
       font-family: inherit;
+      transition: 0.2s;
     }
     .btn-download.mp3 {
       background: linear-gradient(90deg, #6bcb77, #4d96ff);
@@ -480,24 +706,15 @@
       transform: translateY(-2px);
       box-shadow: 0 8px 24px rgba(107, 203, 119, 0.3);
     }
-
-    .browser-warning {
-      background: #ff6b6b11;
-      border: 1px solid #ff6b6b44;
-      border-radius: 10px;
-      padding: 12px 16px;
-      margin-bottom: 20px;
-      font-size: 13px;
-      color: #ff9999;
-      line-height: 1.7;
-      display: none;
+    .btn-download:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
-    .browser-warning.visible { display: block; }
   </style>
 </head>
 <body>
 
-  <!-- ================= LANDING ================= -->
+  <!-- ================= LANDING PAGE ================= -->
   <div id="landingPage" class="page active">
     <div class="landing-wrap">
       <span class="logo-badge">🎬 MOVIE RECAP TOOL</span>
@@ -533,8 +750,8 @@
           <span class="feature-icon">🔊</span>
           <div class="feature-title">အသံထုတ်</div>
           <div class="feature-text">
-            Browser ထဲမှာ Edge TTS ကို တိုက်ရိုက် သုံးပြီး
-            Thiha / Nilar အသံဖိုင် + SRT ထုတ်ပါ။ Backend မလိုပါ။
+            Browser ထဲမှ Edge TTS သုံးပြီး မြန်မာစာသားမှ အသံဖိုင် (MP3)
+            နှင့် SRT ဖိုင် တစ်ခါတည်း ထုတ်ယူပါ။ <b>Thiha</b> / <b>Nilar</b>၊ Speed 1.3x။
           </div>
           <div class="feature-cta">စတင်မယ် →</div>
         </div>
@@ -557,12 +774,6 @@
 
     <div class="workspace">
 
-      <!-- Browser warning -->
-      <div class="browser-warning" id="browserWarning">
-        ⚠️ <b>Microsoft Edge Browser</b> ကို သုံးပါ။ Edge TTS က Edge Browser မှာ အကောင်းဆုံး အလုပ်လုပ်ပါတယ်။
-        Chrome/Firefox မှာ WebSocket connection fail ဖြစ်နိုင်ပါတယ်။
-      </div>
-
       <!-- API Key (translate mode) -->
       <div class="api-box" id="apiBox">
         <label>🔑 API Key:</label>
@@ -570,30 +781,63 @@
         <button class="mini-btn" onclick="toggleKey()" id="toggleBtn">ပြရန်</button>
       </div>
 
-      <!-- Voice Box -->
+      <!-- ဇာတ်ကောင်နာမည် Box -->
+      <div class="char-box" id="charBox">
+        <div class="char-box-header">
+          <span class="char-box-title">👥 ဇာတ်ကောင်နာမည် စာရင်း</span>
+        </div>
+        <div class="char-box-hint">
+          <b>မင်းသား</b> နှင့် <b>မင်းသမီး</b> ကို ကြိုတင်သတ်မှတ်ထားပြီးသား။
+          <b>တခြားဇာတ်ကောင်များ</b> ကိုလည်း အောက်မှာ ထည့်နိုင်သည်။
+        </div>
+
+        <div class="auto-pair">
+          <div class="auto-card">
+            <label class="auto-card-label">
+              👨 မင်းသား <span class="badge">AUTO</span>
+            </label>
+            <input type="text" id="maleLead" value="ဂွေးတို" placeholder="ဂွေးတို">
+          </div>
+          <div class="auto-card">
+            <label class="auto-card-label">
+              👩 မင်းသမီး <span class="badge pink">AUTO</span>
+            </label>
+            <input type="text" id="femaleLead" value="ကြယ်စင်" placeholder="ကြယ်စင်">
+          </div>
+        </div>
+
+        <div class="other-title">🎭 တခြားဇာတ်ကောင်များ (မူရင်းအမည် → မြန်မာအမည်)</div>
+        <div class="char-list" id="charList"></div>
+        <button class="add-char-btn" onclick="addCharacter('', '')">+ ဇာတ်ကောင် ထပ်ထည့်</button>
+      </div>
+
+      <!-- အသံထုတ် Box -->
       <div class="voice-box" id="voiceBox">
         <div class="voice-title">🔊 အသံ ရွေးချယ်ပါ</div>
+
         <div class="voice-grid">
           <label class="voice-option selected" id="voiceThihaCard">
             <input type="radio" name="voice" value="thiha" checked onchange="selectVoice('thiha')">
             <div class="voice-avatar male">👨</div>
             <div class="voice-info">
               <div class="voice-name">Thiha (သိဟ)</div>
-              <div class="voice-desc">အမျိုးသား အသံ</div>
+              <div class="voice-desc">အမျိုးသား အသံ · my-MM-ThihaNeural</div>
             </div>
           </label>
+
           <label class="voice-option" id="voiceNilarCard">
             <input type="radio" name="voice" value="nilar" onchange="selectVoice('nilar')">
             <div class="voice-avatar female">👩</div>
             <div class="voice-info">
               <div class="voice-name">Nilar (နီလာ)</div>
-              <div class="voice-desc">အမျိုးသမီး အသံ</div>
+              <div class="voice-desc">အမျိုးသမီး အသံ · my-MM-NilarNeural</div>
             </div>
           </label>
         </div>
+
         <div class="voice-info-bar">
           <span class="speed-badge">⚡ Speed 1.3x (Fast Vibe)</span>
-          <span class="note">Browser-based Edge TTS · Backend မလို</span>
+          <span class="note">Edge TTS · Browser Direct · No Backend</span>
         </div>
       </div>
 
@@ -635,11 +879,12 @@
 
       <div class="status" id="status"></div>
 
+      <!-- Audio Result -->
       <div class="audio-result" id="audioResult">
         <div class="audio-result-title">✅ အသံဖိုင် အဆင်သင့်ဖြစ်ပါပြီ</div>
         <audio id="audioPlayer" controls></audio>
         <div class="download-row">
-          <button class="btn-download mp3" onclick="downloadAudio()">⬇️ MP3 အသံဖိုင် ဒေါင်းလုပ်</button>
+          <button class="btn-download mp3" id="downloadMp3Btn" onclick="downloadAudio()">⬇️ MP3 အသံဖိုင် ဒေါင်းလုပ်</button>
           <button class="btn-download srt" onclick="downloadSrt()">⬇️ SRT ဖိုင် ဒေါင်းလုပ်</button>
         </div>
       </div>
@@ -652,9 +897,19 @@
     const API_MODEL = 'gemini-3.5-flash-lite';
     const API_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models';
 
+    // ✅ Backend မလိုတော့ပါ — Browser ထဲက Edge TTS ကို တိုက်ရိုက်ခေါ်မယ်
+    const EDGE_TTS_ENDPOINT = 'wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1';
+    const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+
+    // Edge TTS voice names (my-MM)
+    const EDGE_VOICES = {
+      thiha: 'my-MM-ThihaNeural',
+      nilar: 'my-MM-NilarNeural'
+    };
+
     let currentMode = 'fast';
     let selectedVoice = 'thiha';
-    let audioData = { base64: null, srt: null };
+    let audioData = { base64: null, srt: null, url: null, blob: null };
 
     const DEFAULT_MALE   = 'ဂွေးတို';
     const DEFAULT_FEMALE = 'ကြယ်စင်';
@@ -664,6 +919,7 @@
       currentMode = mode || 'fast';
 
       const modeTag   = document.getElementById('modeTag');
+      const charBox   = document.getElementById('charBox');
       const voiceBox  = document.getElementById('voiceBox');
       const apiBox    = document.getElementById('apiBox');
       const voiceBtn  = document.getElementById('voiceBtn');
@@ -673,23 +929,19 @@
       const resTitle  = document.getElementById('resultPanelTitle');
       const wsLabel   = document.getElementById('workspaceLabel');
       const modelTag  = document.getElementById('modelTag');
-      const browserWarn = document.getElementById('browserWarning');
 
       // Reset
       voiceBox.classList.remove('visible');
+      charBox.classList.remove('visible');
       apiBox.style.display = 'flex';
       voiceBtn.style.display = 'none';
       transBtn.style.display = 'inline-flex';
       srcSel.style.display = 'inline-block';
-      browserWarn.classList.remove('visible');
-
-      // Browser check
-      const isEdge = /Edg\//.test(navigator.userAgent);
-      const isChrome = /Chrome\//.test(navigator.userAgent) && !isEdge;
 
       if (currentMode === 'recap') {
         modeTag.textContent = 'Recap Style';
         modeTag.className = 'mode-tag recap';
+        charBox.classList.add('visible');
         wsLabel.textContent = 'ဘာသာပြန်';
         modelTag.textContent = 'Gemini 3.5 Flash Lite';
         srcTitle.textContent = 'မူရင်းစာသား';
@@ -700,6 +952,7 @@
         modeTag.textContent = 'အသံထုတ်';
         modeTag.className = 'mode-tag voice';
         voiceBox.classList.add('visible');
+        apiBox.style.display = 'none';
         wsLabel.textContent = 'အသံထုတ်';
         modelTag.textContent = 'Edge TTS (Browser)';
         srcTitle.textContent = 'မြန်မာစာသား (အသံထုတ်ရန်)';
@@ -707,11 +960,6 @@
         srcSel.style.display = 'none';
         transBtn.style.display = 'none';
         voiceBtn.style.display = 'inline-flex';
-
-        // Browser warning
-        if (!isEdge) {
-          browserWarn.classList.add('visible');
-        }
 
       } else {
         modeTag.textContent = 'မြန်ဆန်သည်';
@@ -751,11 +999,23 @@
     const sourceCount = document.getElementById('sourceCount');
     const resultCount = document.getElementById('resultCount');
     const apiKeyInput = document.getElementById('apiKey');
+    const charList    = document.getElementById('charList');
+    const maleLeadInput   = document.getElementById('maleLead');
+    const femaleLeadInput = document.getElementById('femaleLead');
 
     // ============ API Key ============
     apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
     apiKeyInput.addEventListener('input', () => {
       localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+    });
+
+    maleLeadInput.value   = localStorage.getItem('recap_male')   || DEFAULT_MALE;
+    femaleLeadInput.value = localStorage.getItem('recap_female') || DEFAULT_FEMALE;
+    maleLeadInput.addEventListener('input', () => {
+      localStorage.setItem('recap_male', maleLeadInput.value.trim() || DEFAULT_MALE);
+    });
+    femaleLeadInput.addEventListener('input', () => {
+      localStorage.setItem('recap_female', femaleLeadInput.value.trim() || DEFAULT_FEMALE);
     });
 
     sourceText.addEventListener('input', () => {
@@ -765,6 +1025,7 @@
       resultCount.textContent = resultText.value.length + ' လုံး';
     });
 
+    // ============ Helpers ============
     function toggleKey() {
       const inp = apiKeyInput;
       const btn = document.getElementById('toggleBtn');
@@ -784,6 +1045,10 @@
       resultCount.textContent = '0 လုံး';
       setStatus('');
       document.getElementById('audioResult').classList.remove('visible');
+      if (audioData.url) { URL.revokeObjectURL(audioData.url); audioData.url = null; }
+      audioData.base64 = null;
+      audioData.srt = null;
+      audioData.blob = null;
     }
 
     async function copyResult() {
@@ -797,13 +1062,62 @@
       }
     }
 
+    // ============ Voice Select ============
     function selectVoice(voice) {
       selectedVoice = voice;
       document.getElementById('voiceThihaCard').classList.toggle('selected', voice === 'thiha');
       document.getElementById('voiceNilarCard').classList.toggle('selected', voice === 'nilar');
     }
 
-    // ============ Prompt Builders (Translation) ============
+    // ============ Character Management ============
+    function escapeAttr(str) {
+      return String(str).replace(/"/g, '&quot;').replace(/</g, '&lt;');
+    }
+
+    function createCharRow(orig = '', mm = '') {
+      const row = document.createElement('div');
+      row.className = 'char-row';
+      row.innerHTML = `
+        <input type="text" class="char-orig" placeholder="မူရင်းအမည် (李强 / Li Qiang)" value="${escapeAttr(orig)}">
+        <span class="arrow">→</span>
+        <input type="text" class="char-mm" placeholder="မြန်မာအမည် (မောင်လေး)" value="${escapeAttr(mm)}">
+        <button class="del-btn" onclick="this.parentElement.remove(); saveCharacters();" title="ဖျက်">✕</button>
+      `;
+      row.querySelectorAll('input').forEach(inp => {
+        inp.addEventListener('input', saveCharacters);
+      });
+      return row;
+    }
+
+    function addCharacter(orig = '', mm = '') {
+      charList.appendChild(createCharRow(orig, mm));
+      saveCharacters();
+    }
+
+    function saveCharacters() {
+      localStorage.setItem('recap_other_characters', JSON.stringify(getOtherCharacters()));
+    }
+
+    function getOtherCharacters() {
+      const rows = charList.querySelectorAll('.char-row');
+      const chars = [];
+      rows.forEach(row => {
+        const orig = row.querySelector('.char-orig').value.trim();
+        const mm   = row.querySelector('.char-mm').value.trim();
+        if (orig && mm) chars.push({ orig, mm });
+      });
+      return chars;
+    }
+
+    function loadSavedCharacters() {
+      try {
+        const saved = JSON.parse(localStorage.getItem('recap_other_characters') || '[]');
+        saved.forEach(c => addCharacter(c.orig, c.mm));
+      } catch (e) {}
+    }
+    loadSavedCharacters();
+
+    // ============ Prompt Builders ============
     function buildFastPrompt(text, srcLang) {
       const langHint = srcLang === 'auto'
         ? 'မူရင်းစာသားသည် တရုတ် သို့မဟုတ် အင်္ဂလိပ် ဖြစ်နိုင်သည်။ ဘာသာစကားကို ကိုယ်တိုင်ခွဲခြားပါ။'
@@ -832,13 +1146,24 @@ ${text}
         ? 'မူရင်းစာသားသည် တရုတ် သို့မဟုတ် အင်္ဂလိပ် ဖြစ်နိုင်သည်။ ဘာသာစကားကို ကိုယ်တိုင်ခွဲခြားပါ။'
         : `မူရင်းဘာသာစကားသည် ${srcLang === 'Chinese' ? 'တရုတ်' : 'အင်္ဂလိပ်'} ဖြစ်သည်။`;
 
-      const maleName   = localStorage.getItem('recap_male') || DEFAULT_MALE;
-      const femaleName = localStorage.getItem('recap_female') || DEFAULT_FEMALE;
+      const maleName   = (maleLeadInput.value.trim() || DEFAULT_MALE);
+      const femaleName = (femaleLeadInput.value.trim() || DEFAULT_FEMALE);
+      const others     = getOtherCharacters();
 
       let charSection = `\n★★★ မဖြစ်မနေ လိုက်နာရမည့် ဇာတ်ကောင်နာမည် စာရင်း ★★★\n\n`;
+      charSection += `【Auto-Pair】မင်းသား / မင်းသမီး\n`;
       charSection += `• မင်းသား (male lead /男主角) → "${maleName}"\n`;
       charSection += `• မင်းသမီး (female lead /女主角) → "${femaleName}"\n`;
       charSection += `• "သူ" / "သူမ" ဆိုတဲ့ နေရာမှာလည်း သက်ဆိုင်ရာ ဇာတ်ကောင်အမည်ကို ထည့်ပါ။\n\n`;
+
+      if (others.length > 0) {
+        charSection += `【တခြားဇာတ်ကောင်များ】\n`;
+        others.forEach((c, i) => {
+          charSection += `  ${i + 1}. "${c.orig}"  →  "${c.mm}"\n`;
+        });
+        charSection += `\n`;
+      }
+
       charSection += `★ မူရင်းစာသားထဲမှာ ဇာတ်ကောင်နာမည်တွေ ပေါ်လာရင် မြန်မာအမည်တွေနဲ့ အစားထိုးပါ။\n`;
       charSection += `★ ဇာတ်ကောင်တွေရဲ့ စကားပြောပုံစံကို မြန်မာလူမျိုးတွေ နေ့စဉ်ပြောနေကျ သဘာဝကျတဲ့ စကားနဲ့ ပြန်ဆိုပါ။\n`;
 
@@ -847,9 +1172,10 @@ ${langHint}
 ${charSection}
 လိုက်နာရမည့် အချက်များ:
 1. Movie Recap ပုံစံနှင့် ကိုက်ညီအောင် သဘာဝကျကျ၊ စီးဆင်းမှုကောင်းမွန်စွာ ပြန်ဆိုပါ။
-2. ဇာတ်ကောင်များ ပြောသော စကားများကို သဘာဝကျသော စကားပြောပုံစံဖြင့် ပြန်ဆိုပါ။
-3. မူရင်းအဓိပ္ပာယ် မပျောက်စေရန်။
-4. ဘာသာပြန်ချက်သာ ပြန်ပေးပါ။
+2. ဇာတ်ကောင်များ ပြောသော စကားများကို မြန်မာလူမျိုးများ နေ့စဉ်ပြောနေကျ သဘာဝကျသော စကားပြောပုံစံဖြင့် ပြန်ဆိုပါ။
+3. ရုပ်ရှင်ကြည့်နေရသလို ခံစားရအောင် သက်ဝင်လှုပ်ရှားစွာ ရေးပါ။
+4. မူရင်းအဓိပ္ပာယ် မပျောက်စေရန်။
+5. ဘာသာပြန်ချက်သာ ပြန်ပေးပါ။ ရှင်းလင်းချက် မထည့်ပါနှင့်။
 
 မူရင်းစာသား:
 """
@@ -914,150 +1240,210 @@ ${text}
     }
 
     // ============================================================
-    // 🎙️ EDGE TTS — BROWSER-BASED
+    //  EDGE TTS — Browser Direct (No Backend)
     // ============================================================
 
-    const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-    const VOICE_MAP = {
-      thiha: 'my-MM-ThihaNeural',
-      nilar: 'my-MM-NilarNeural'
-    };
-    const RATE = '+30%';
+    // Microsoft Edge TTS အတွက် Sec-MS-GEC token generate
+    function generateSecMsGec() {
+      // Windows file time (100-nanosecond intervals since 1601-01-01)
+      const WIN_EPOCH = 11644473600n; // seconds between 1601 and 1970
+      const S_TO_NS = 10000000n;       // 100-ns intervals per second
 
-    function generateUUID() {
-      return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g, () =>
-        Math.floor(Math.random() * 16).toString(16)
-      );
+      let ticks = BigInt(Math.floor(Date.now() / 1000)) + WIN_EPOCH;
+      ticks = ticks * S_TO_NS;
+
+      // Round down to nearest 5 minutes (300 seconds)
+      const roundedTicks = (ticks / (300n * S_TO_NS)) * (300n * S_TO_NS);
+
+      // SHA-256 hash of (ticks + trusted client token)
+      const str = roundedTicks.toString() + TRUSTED_CLIENT_TOKEN;
+      return sha256Hex(str).toUpperCase();
     }
 
-    function escapeXml(str) {
-      return str
+    // SHA-256 (synchronous မဟုတ် — async)
+    async function sha256Hex(str) {
+      const encoder = new TextEncoder();
+      const data = encoder.encode(str);
+      const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+      const hashArray = Array.from(new Uint8Array(hashBuffer));
+      return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    async function buildEdgeWSUrl() {
+      const connectionId = generateUUID().replace(/-/g, '');
+      const secMsGec = await generateSecMsGec();
+
+      const url = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1` +
+        `?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}` +
+        `&Sec-MS-GEC=${secMsGec}` +
+        `&Sec-MS-GEC-Version=1-130.0.2849.68` +
+        `&ConnectionId=${connectionId}`;
+      return { url, requestId: generateUUID().replace(/-/g, '') };
+    }
+
+    function buildSSML(text, voiceName) {
+      const escaped = text
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&apos;');
+
+      return `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='my-MM'>
+        <voice name='${voiceName}'>
+          <prosody rate='+30%' pitch='+0Hz'>
+            ${escaped}
+          </prosody>
+        </voice>
+      </speak>`;
     }
 
-    function srtTime(seconds) {
-      const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
-      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
-      const s = String(Math.floor(seconds % 60)).padStart(2, '0');
-      const ms = String(Math.floor((seconds % 1) * 1000)).padStart(3, '0');
-      return `${h}:${m}:${s},${ms}`;
-    }
-
-    function buildSrt(segments) {
-      let srt = '';
-      let index = 1;
-      for (const seg of segments) {
-        srt += `${index}\n${srtTime(seg.start)} --> ${srtTime(seg.end)}\n${seg.text}\n\n`;
-        index++;
-      }
-      return srt;
-    }
-
-    async function edgeTTSSynthesize(text, voiceName) {
+    // Edge TTS WebSocket ဖြင့် အသံထုတ်
+    function synthesizeWithEdgeTTS(wsInfo, ssml) {
       return new Promise((resolve, reject) => {
-        const connectionId = generateUUID();
-        const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_TOKEN}&ConnectionId=${connectionId}`;
-
         const audioChunks = [];
-        let resolved = false;
-        let ws;
+        const srtLines = [];
+        let srtIndex = 1;
 
-        try {
-          ws = new WebSocket(wsUrl);
-        } catch (e) {
-          reject(new Error('WebSocket မဖွင့်နိုင်ပါ: ' + e.message));
-          return;
-        }
-
+        const ws = new WebSocket(wsInfo.url);
         ws.binaryType = 'arraybuffer';
 
         const timeout = setTimeout(() => {
-          if (!resolved) {
-            resolved = true;
-            try { ws.close(); } catch (e) {}
-            reject(new Error('Timeout — Edge TTS server က ပြန်မဖြေပါ'));
-          }
-        }, 60000);
+          try { ws.close(); } catch (e) {}
+          reject(new Error('TTS timeout — 30 စက္ကန့်ကျော်သွားသည်'));
+        }, 30000);
 
         ws.onopen = () => {
-          const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-
-          // 1. speech.config
+          // 1) speech.config
           const configMsg =
-            `X-Timestamp:${timestamp}\r\n` +
+            `X-Timestamp:${new Date().toString()}\r\n` +
             `Content-Type:application/json; charset=utf-8\r\n` +
             `Path:speech.config\r\n\r\n` +
-            `{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`;
-
+            `{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"true","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`;
           ws.send(configMsg);
 
-          // 2. SSML
-          const ssml =
-            `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='my-MM'>` +
-            `<voice name='${voiceName}'>` +
-            `<prosody rate='${RATE}' pitch='+0Hz' volume='+0%'>${escapeXml(text)}</prosody>` +
-            `</voice></speak>`;
-
+          // 2) SSML
           const ssmlMsg =
-            `X-RequestId:${connectionId}\r\n` +
+            `X-RequestId:${wsInfo.requestId}\r\n` +
             `Content-Type:application/ssml+xml\r\n` +
-            `X-Timestamp:${timestamp}\r\n` +
-            `Path:ssml\r\n\r\n` +
-            ssml;
-
-          ws.send(ssmlMsgime);
+            `X-Timestamp:${new Date().toString()}Z\r\n` +
+            `Path:ssml\r\n\r\n${ssml}`;
+          ws.send(ssmlMsg);
         };
 
-        ws.onmessage = ()event) => {
-          if (typeof event.data {
- === 'string') {
-            // Text      message — turn.end ကို စောင့ const်
-            if (event.data.includes('Path:turn.end')) {
-              if (!resolved) {
-                resolved = true;
-                clearTimeout(timeout);
-                try { ws.close(); } catch (e) {}
-                resolve(audioChunks);
-              }
+        ws.onmessage = (event) => {
+          if (typeof event.data === 'string') {
+            const data = event.data;
+
+            // Sentence boundary metadata
+            if (data.includes('Path:audio.metadata')) {
+              try {
+                const jsonStart = data.indexOf('{');
+                if (jsonStart > -1) {
+                  const meta = JSON.parse(data.substring(jsonStart));
+                  if (meta.Metadata) {
+                    meta.Metadata.forEach(m => {
+                      if (m.Type === 'SentenceBoundary' && m.Data) {
+                        const offsetSec = m.Data.Offset / 10000000;
+                        const durationSec = m.Data.Duration / 10000000;
+                        const textVal = m.Data.text?.Text || m.Data.text || '';
+                        if (textVal) {
+                          srtLines.push({
+                            index: srtIndex++,
+                            start: offsetSec,
+                            end: offsetSec + durationSec,
+                            text: textVal
+                          });
+                        }
+                      }
+                    });
+                  }
+                }
+              } catch (e) { /* ignore */ }
+            }
+
+            // Turn end — ပြီးဆုံး
+            if (data.includes('Path:turn.end')) {
+              clearTimeout(timeout);
+              try { ws.close(); } catch (e) {}
+
+              const totalLen = audioChunks.reduce((s, c) => s + c.byteLength, 0);
+              const merged = new Uint8Array(totalLen);
+              let offset = 0;
+              audioChunks.forEach(c => {
+                merged.set(new Uint8Array(c), offset);
+                offset += c.byteLength;
+              });
+
+              resolve({
+                audio: merged.buffer,
+                srt: srtLines.length > 0 ? formatSrt(srtLines) : null
+              });
             }
           } else {
-            // Binary — audio chunk
-            const buffer = event.data;
-            if (buffer.byteLength > 2) {
-              const headerLength = new DataView(buffer).getUint16(0, false);
-              if (buffer.byteLength > 2 + headerLength) {
-                audioChunks.push(buffer.slice(2 + headerLength));
-              }
+            // Binary — audio data
+            const view = new DataView(event.data);
+            const headerLen = view.getUint16(0);
+            const audioStart = 2 + headerLen;
+            const audioBytes = event.data.slice(audioStart);
+            if (audioBytes.byteLength > 0) {
+              audioChunks.push(audioBytes);
             }
           }
         };
 
         ws.onerror = (err) => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timeout);
-            reject(new Error('WebSocket error — Edge Browser သုံးပါ'));
-          }
+          clearTimeout(timeout);
+          console.error('WebSocket error:', err);
+          reject(new Error('WebSocket ချိတ်ဆက်မှု မအောင်မြင်ပါ — CORS/Network စစ်ပါ'));
         };
 
-        ws.onclose = () => {
-          if (!resolved) {
-            resolved = true;
-            clearTimeout(timeout);
-            if (audioChunks.length === 0) {
-              reject(new Error('WebSocket closed — audio မရရှိပါ'));
-            } else {
-              resolve(audioChunks);
-            }
+        ws.onclose = (event) => {
+          clearTimeout(timeout);
+          if (audioChunks.length === 0) {
+            reject(new Error(`WebSocket ပိတ်သွားသည် (code: ${event.code}) — အသံမရရှိပါ`));
           }
         };
       });
     }
 
+    // ============ Web Speech API Fallback ============
+    function synthesizeWithWebSpeech(text, voice) {
+      return new Promise((resolve, reject) => {
+        if (!('speechSynthesis' in window)) {
+          reject(new Error('သင့် browser က Web Speech API ကို မထောက်ပံ့ပါ'));
+          return;
+        }
+
+        speechSynthesis.cancel();
+
+        const voices = speechSynthesis.getVoices();
+        const mmVoices = voices.filter(v => v.lang.startsWith('my') || v.lang.includes('MM'));
+
+        let selectedVoiceObj = null;
+        if (mmVoices.length > 0) {
+          if (voice === 'thiha') {
+            selectedVoiceObj = mmVoices.find(v => /male|thiha|သိဟ/i.test(v.name)) || mmVoices[0];
+          } else {
+            selectedVoiceObj = mmVoices.find(v => /female|nilar|နီလာ/i.test(v.name)) || mmVoices[mmVoices.length - 1];
+          }
+        }
+
+        const utterance = new SpeechSynthesisUtterance(text);
+        if (selectedVoiceObj) utterance.voice = selectedVoiceObj;
+        utterance.lang = 'my-MM';
+        utterance.rate = 1.3;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        utterance.onend = () => resolve({ fallback: true });
+        utterance.onerror = (e) => reject(new Error('Web Speech Error: ' + e.error));
+
+        speechSynthesis.speak(utterance);
+      });
+    }
+
+    // ============ Voice Generation ============
     async function generateVoice() {
       const text = sourceText.value.trim();
 
@@ -1069,119 +1455,139 @@ ${text}
 
       const voiceBtn = document.getElementById('voiceBtn');
       voiceBtn.disabled = true;
-      setStatus('<span class="spinner"></span> အသံထုတ်နေသည်...', 'loading');
+      setStatus('<span class="spinner"></span> အသံထုတ်နေသည်... (ခဏစောင့်ပါ)', 'loading');
       resultText.value = '';
       document.getElementById('audioResult').classList.remove('visible');
 
+      // ရှေးဟောင်း audio ရပ်
+      if (audioData.url) {
+        URL.revokeObjectURL(audioData.url);
+        audioData.url = null;
+      }
+      audioData.base64 = null;
+      audioData.srt = null;
+      audioData.blob = null;
+
+      const voiceName = EDGE_VOICES[selectedVoice] || EDGE_VOICES.thiha;
+
       try {
-        const voiceName = VOICE_MAP[selectedVoice] || VOICE_MAP.thiha;
+        // ✅ နည်းလမ်း ၁ — Edge TTS (browser direct)
+        const wsInfo = await buildEdgeWSUrl();
+        const ssml = buildSSML(text, voiceName);
+        const result = await synthesizeWithEdgeTTS(wsInfo, ssml);
 
-        // စာကြောင်းခွဲ
-        const lines = text
-          .split(/(?<=[။!?\n])/g)
-          .map(l => l.trim())
-          .filter(l => l.length > 0);
-
-        if (lines.length === 0) {
-          throw new Error('စာကြောင်း မရှိပါ');
+        if (!result.audio || result.audio.byteLength === 0) {
+          throw new Error('Edge TTS အသံမရရှိပါ');
         }
 
-        setStatus(`<span class="spinner"></span> စာကြောင်း ${lines.length} ခု ထုတ်နေသည်...`, 'loading');
+        // Success — MP3 + SRT
+        audioData.base64 = arrayBufferToBase64(result.audio);
+        audioData.srt = result.srt || generateSrtFromText(text);
+        audioData.blob = new Blob([result.audio], { type: 'audio/mpeg' });
 
-        const audioParts = [];
-        const segments = [];
-        let currentTime = 0;
+        resultText.value = audioData.srt;
+        resultCount.textContent = audioData.srt.length + ' လုံး';
 
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-
-          try {
-            const chunks = await edgeTTSSynthesize(line, voiceName);
-
-            for (const chunk of chunks) {
-              audioParts.push(new Uint8Array(chunk));
-            }
-
-            const charCount = line.replace(/\s/g, '').length;
-            const duration = Math.max(charCount / 6.5, 1.2);
-
-            segments.push({
-              start: currentTime,
-              end: currentTime + duration,
-              text: line
-            });
-            currentTime += duration;
-
-          } catch (lineErr) {
-            console.error('Line error:', lineErr);
-            // ကျော်
-            continue;
-          }
-        }
-
-        if (audioParts.length === 0) {
-          throw new Error('အသံထုတ်ခြင်း မအောင်မြင်ပါ — Edge Browser သုံးပါ');
-        }
-
-        // Audio ပေါင်း
-        const totalLength = audioParts.reduce((sum, b) => sum + b.byteLength, 0);
-        const finalAudio = new Uint8Array(totalLength);
-        let offset = 0;
-        for (const part of audioParts) {
-          finalAudio.set(part, offset);
-          offset += part.byteLength;
-        }
-
-        // SRT
-        const srt = buildSrt(segments);
-
-        // Audio → Base64
-        let binary = '';
-        const chunkSize = 0x8000;
-        for (let i = 0; i < finalAudio.length; i += chunkSize) {
-          binary += String.fromCharCode.apply(null, finalAudio.subarray(i, i + chunkSize));
-        }
-        const base64 = btoa(binary);
-
-        audioData.base64 = base64;
-        audioData.srt = srt;
-
-        // Audio Blob + Player
-        const blob = new Blob([finalAudio], { type: 'audio/mpeg' });
-        const url = URL.createObjectURL(blob);
+        audioData.url = URL.createObjectURL(audioData.blob);
         const player = document.getElementById('audioPlayer');
-        player.src = url;
+        player.src = audioData.url;
+        player.style.display = 'block';
         player.playbackRate = 1.3;
         player.addEventListener('loadedmetadata', () => {
           player.playbackRate = 1.3;
         });
 
-        // SRT preview
-        resultText.value = srt;
-        resultCount.textContent = srt.length + ' လုံး';
-
         document.getElementById('audioResult').classList.add('visible');
+        document.getElementById('downloadMp3Btn').disabled = false;
 
-        setStatus(`✅ အသံထုတ်ပြီးပါပြီ · ${currentTime.toFixed(1)} စက္ကန့် · Speed 1.3x`, 'success');
+        setStatus('✅ Edge TTS · MP3 + SRT အဆင်သင့် · Speed 1.3x', 'success');
 
-      } catch (error) {
-        console.error(error);
-        let msg = error.message || 'Error';
+      } catch (edgeError) {
+        console.warn('Edge TTS မအောင်မြင်၊ Web Speech API သို့ ပြောင်း:', edgeError);
 
-        if (msg.includes('WebSocket') || msg.includes('closed')) {
-          msg = 'WebSocket မချိတ်နိုင်ပါ — <b>Microsoft Edge Browser</b> သုံးပါ။ Chrome/Firefox မှာ Microsoft က block လုပ်ထားသည်။';
-        } else if (msg.includes('Timeout')) {
-          msg = 'Timeout — Edge TTS server က မဖြေပါ။ ထပ်စမ်းပါ။';
+        // ✅ နည်းလမ်း ၂ — Web Speech API (fallback)
+        try {
+          setStatus('<span class="spinner"></span> Edge TTS မရပါ — Browser Voice သုံးနေသည်...', 'loading');
+
+          const srt = generateSrtFromText(text);
+          audioData.srt = srt;
+          audioData.base64 = null;
+          audioData.blob = null;
+
+          resultText.value = srt;
+          resultCount.textContent = srt.length + ' လုံး';
+
+          // Player ဖျောက် (Web Speech API က blob မပေး)
+          const player = document.getElementById('audioPlayer');
+          player.style.display = 'none';
+
+          document.getElementById('audioResult').classList.add('visible');
+          document.getElementById('downloadMp3Btn').disabled = true;
+
+          await synthesizeWithWebSpeech(text, selectedVoice);
+
+          setStatus('✅ Browser Voice ဖြင့် အသံဖတ်ပြီးပါပြီ · SRT download ရနိုင် · Speed 1.3x', 'success');
+
+        } catch (fallbackError) {
+          console.error('Fallback error:', fallbackError);
+          setStatus('❌ Error: ' + fallbackError.message, 'error');
         }
-
-        setStatus('❌ ' + msg, 'error');
       } finally {
         voiceBtn.disabled = false;
       }
     }
 
-    // ============ Download ============
-    function base64ToBlob(base64, m byteChars = atob(base64);
+    // ============ SRT Formatting ============
+    function formatSrt(lines) {
+      return lines.map(l => {
+        return `${l.index}\n${formatTime(l.start)} --> ${formatTime(l.end)}\n${l.text}\n`;
+      }).join('\n');
+    }
+
+    function formatTime(sec) {
+      const h = Math.floor(sec / 3600);
+      const m = Math.floor((sec % 3600) / 60);
+      const s = Math.floor(sec % 60);
+      const ms = Math.floor((sec - Math.floor(sec)) * 1000);
+      return `${pad2(h)}:${pad2(m)}:${pad2(s)},${pad3(ms)}`;
+    }
+
+    function pad2(n) { return String(n).padStart(2, '0'); }
+    function pad3(n) { return String(n).padStart(3, '0'); }
+
+    function generateSrtFromText(text) {
+      const lines = text.split(/[။.!?\n]+/).filter(l => l.trim());
+      let srt = '';
+      let time = 0;
+      lines.forEach((line, i) => {
+        const dur = Math.max(1.5, line.length * 0.08);
+        srt += `${i + 1}\n${formatTime(time)} --> ${formatTime(time + dur)}\n${line.trim()}\n\n`;
+        time += dur;
+      });
+      return srt || text;
+    }
+
+    // ============ Utils ============
+    function generateUUID() {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+      });
+    }
+
+    function arrayBufferToBase64(buffer) {
+      const bytes = new Uint8Array(buffer);
+      let binary = '';
+      const chunk = 0x8000;
+      for (let i = 0; i < bytes.length; i += chunk) {
+        binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+      }
+      return btoa(binary);
+    }
+
+    function base64ToBlob(base64, mime) {
+      const byteChars = atob(base64);
       const byteNums = new Array(byteChars.length);
       for (let i = 0; i < byteChars.length; i++) {
         byteNums[i] = byteChars.charCodeAt(i);
@@ -1190,9 +1596,11 @@ ${text}
     }
 
     function downloadAudio() {
-      if (!audioData.base64) return;
-      const blob = base64ToBlob(audioData.base64, 'audio/mpeg');
-      triggerDownload(blob, `recap_${selectedVoice}_${Date.now()}.mp3`);
+      if (!audioData.blob) {
+        setStatus('⚠️ MP3 ဖိုင် မရနိုင်ပါ — Browser Voice mode ဖြစ်နေသည်', 'error');
+        return;
+      }
+      triggerDownload(audioData.blob, `recap_${selectedVoice}_${Date.now()}.mp3`);
     }
 
     function downloadSrt() {
@@ -1212,12 +1620,19 @@ ${text}
       setTimeout(() => URL.revokeObjectURL(url), 5000);
     }
 
+    // Ctrl+Enter
     sourceText.addEventListener('keydown', (e) => {
       if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
         if (currentMode === 'voice') generateVoice();
         else translateText();
       }
     });
+
+    // Voice list load (Web Speech API)
+    if ('speechSynthesis' in window) {
+      speechSynthesis.onvoiceschanged = () => {};
+      speechSynthesis.getVoices();
+    }
 
     if (location.hash === '#workspace-fast') enterWorkspace('fast');
     else if (location.hash === '#workspace-recap') enterWorkspace('recap');
