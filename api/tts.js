@@ -1,151 +1,82 @@
-const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
-const VOICES = {
-  thiha: 'my-MM-ThihaNeural',
-  nilar: 'my-MM-NilarNeural'
-};
+// ============ Voice Generation (Vercel Serverless Backend) ============
+async function generateVoice() {
+  const text = sourceText.value.trim();
 
-module.exports = async function handler(req, res) {
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  if (!text) {
+    setStatus('⚠️ အသံထုတ်ရန် စာသား ထည့်ပါ', 'error');
+    sourceText.focus();
+    return;
+  }
 
-  if (req.method === 'OPTIONS') return res.status(200).end();
-  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
+  const voiceBtn = document.getElementById('voiceBtn');
+  voiceBtn.disabled = true;
+  setStatus('<span class="spinner"></span> အသံထုတ်နေသည်... (ခဏစောင့်ပါ)', 'loading');
+  resultText.value = '';
+  document.getElementById('audioResult').classList.remove('visible');
+
+  // ရှေးဟောင်း audio ရပ်
+  if (audioData.url) {
+    URL.revokeObjectURL(audioData.url);
+    audioData.url = null;
+  }
+  audioData.base64 = null;
+  audioData.srt = null;
+  audioData.blob = null;
 
   try {
-    const { text, voice } = req.body || {};
-    if (!text) return res.status(400).json({ error: 'No text provided' });
+    const response = await fetch(TTS_API, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: text,
+        voice: selectedVoice
+      })
+    });
 
-    const voiceName = VOICES[voice] || VOICES.thiha;
-    const result = await edgeTTS(text, voiceName);
-    return res.status(200).json(result);
-  } catch (e) {
-    console.error('TTS Error:', e);
-    return res.status(500).json({ error: e.message });
+    if (!response.ok) {
+      const err = await response.json().catch(() => ({}));
+      throw new Error(err?.error || `HTTP ${response.status}`);
+    }
+
+    const data = await response.json();
+
+    if (!data.audio) throw new Error('အသံဖိုင် မရရှိပါ');
+
+    // Base64 → Blob
+    audioData.base64 = data.audio;
+    audioData.srt = data.srt || generateSrtFromText(text);
+    audioData.blob = base64ToBlob(data.audio, 'audio/mpeg');
+
+    // SRT preview
+    resultText.value = audioData.srt;
+    resultCount.textContent = audioData.srt.length + ' လုံး';
+
+    // Audio player
+    audioData.url = URL.createObjectURL(audioData.blob);
+    const player = document.getElementById('audioPlayer');
+    player.src = audioData.url;
+    player.style.display = 'block';
+    player.playbackRate = 1.3;
+    player.addEventListener('loadedmetadata', () => {
+      player.playbackRate = 1.3;
+    });
+
+    document.getElementById('audioResult').classList.add('visible');
+
+    // MP3 download button ဖွင့်
+    const mp3Btn = document.getElementById('downloadMp3Btn');
+    if (mp3Btn) mp3Btn.disabled = false;
+
+    setStatus('✅ အသံထုတ်ပြီးပါပြီ · MP3 + SRT အဆင်သင့် · Speed 1.3x', 'success');
+
+  } catch (error) {
+    console.error('TTS Error:', error);
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      setStatus('❌ Backend server မရနိုင်ပါ။ Vercel deploy စစ်ပါ။', 'error');
+    } else {
+      setStatus('❌ Error: ' + error.message, 'error');
+    }
+  } finally {
+    voiceBtn.disabled = false;
   }
-};
-
-async function edgeTTS(text, voiceName) {
-  const { WebSocket } = require('ws');
-  const crypto = require('crypto');
-
-  const secMsGec = generateSecMsGec(crypto);
-  const connectionId = crypto.randomUUID().replace(/-/g, '');
-  const requestId = crypto.randomUUID().replace(/-/g, '');
-
-  const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_CLIENT_TOKEN}&Sec-MS-GEC=${secMsGec}&Sec-MS-GEC-Version=1-130.0.2849.68&ConnectionId=${connectionId}`;
-
-  const ssml = `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='my-MM'>
-    <voice name='${voiceName}'>
-      <prosody rate='+30%' pitch='+0Hz'>${escapeXml(text)}</prosody>
-    </voice>
-  </speak>`;
-
-  return new Promise((resolve, reject) => {
-    const ws = new WebSocket(wsUrl);
-    const audioChunks = [];
-    const srtLines = [];
-    let srtIndex = 1;
-
-    const timeout = setTimeout(() => {
-      try { ws.close(); } catch (e) {}
-      reject(new Error('TTS timeout'));
-    }, 30000);
-
-    ws.on('open', () => {
-      const configMsg = `X-Timestamp:${new Date().toString()}\r\nContent-Type:application/json; charset=utf-8\r\nPath:speech.config\r\n\r\n{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"true","wordBoundaryEnabled":"false"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`;
-      ws.send(configMsg);
-
-      const ssmlMsg = `X-RequestId:${requestId}\r\nContent-Type:application/ssml+xml\r\nX-Timestamp:${new Date().toString()}Z\r\nPath:ssml\r\n\r\n${ssml}`;
-      ws.send(ssmlMsg);
-    });
-
-    ws.on('message', (data, isBinary) => {
-      if (isBinary) {
-        const buf = Buffer.from(data);
-        const headerLen = buf.readUInt16BE(0);
-        const audio = buf.slice(2 + headerLen);
-        if (audio.length > 0) audioChunks.push(audio);
-      } else {
-        const msg = data.toString();
-
-        if (msg.includes('Path:audio.metadata')) {
-          try {
-            const jsonStart = msg.indexOf('{');
-            const meta = JSON.parse(msg.substring(jsonStart));
-            if (meta.Metadata) {
-              meta.Metadata.forEach(m => {
-                if (m.Type === 'SentenceBoundary' && m.Data) {
-                  const offsetSec = m.Data.Offset / 10000000;
-                  const durationSec = m.Data.Duration / 10000000;
-                  const textVal = m.Data.text?.Text || m.Data.text || '';
-                  if (textVal) {
-                    srtLines.push({
-                      index: srtIndex++,
-                      start: offsetSec,
-                      end: offsetSec + durationSec,
-                      text: textVal
-                    });
-                  }
-                }
-              });
-            }
-          } catch (e) {}
-        }
-
-        if (msg.includes('Path:turn.end')) {
-          clearTimeout(timeout);
-          ws.close();
-
-          const merged = Buffer.concat(audioChunks);
-          resolve({
-            audio: merged.toString('base64'),
-            srt: srtLines.length > 0 ? formatSrt(srtLines) : null
-          });
-        }
-      }
-    });
-
-    ws.on('error', (err) => {
-      clearTimeout(timeout);
-      reject(err);
-    });
-
-    ws.on('close', () => clearTimeout(timeout));
-  });
 }
-
-function generateSecMsGec(crypto) {
-  const WIN_EPOCH = 11644473600n;
-  const S_TO_NS = 10000000n;
-  let ticks = BigInt(Math.floor(Date.now() / 1000)) + WIN_EPOCH;
-  ticks = ticks * S_TO_NS;
-  const rounded = (ticks / (300n * S_TO_NS)) * (300n * S_TO_NS);
-  const str = rounded.toString() + TRUSTED_CLIENT_TOKEN;
-  return crypto.createHash('sha256').update(str).digest('hex').toUpperCase();
-}
-
-function escapeXml(s) {
-  return s.replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&apos;');
-}
-
-function formatSrt(lines) {
-  return lines.map(l =>
-    `${l.index}\n${fmt(l.start)} --> ${fmt(l.end)}\n${l.text}\n`
-  ).join('\n');
-}
-
-function fmt(sec) {
-  const h = Math.floor(sec / 3600);
-  const m = Math.floor((sec % 3600) / 60);
-  const s = Math.floor(sec % 60);
-  const ms = Math.floor((sec - Math.floor(sec)) * 1000);
-  return `${pad(h)}:${pad(m)}:${pad(s)},${pad3(ms)}`;
-}
-
-function pad(n) { return String(n).padStart(2, '0'); }
-function pad3(n) { return String(n).padStart(3, '0'); }
