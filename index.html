@@ -1,0 +1,1227 @@
+<!DOCTYPE html>
+<html lang="my">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movie Recap Tool</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Pyidaungsu', 'Myanmar Text', sans-serif;
+      background: #12121c;
+      color: #e0e0e0;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .page { display: none; min-height: 100vh; }
+    .page.active { display: block; animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ===== Landing ===== */
+    #landingPage {
+      display: none;
+      place-items: center;
+      background: radial-gradient(circle at 20% 20%, #1e2a4a 0%, #12121c 55%),
+                  radial-gradient(circle at 80% 80%, #2a1e3a 0%, transparent 60%);
+      padding: 40px 20px;
+    }
+    #landingPage.active { display: grid; }
+
+    .landing-wrap { max-width: 900px; width: 100%; text-align: center; }
+
+    .logo-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      background: #4d96ff22;
+      border: 1px solid #4d96ff55;
+      border-radius: 30px;
+      color: #6bb0ff;
+      font-size: 13px;
+      margin-bottom: 24px;
+    }
+
+    .landing-title {
+      font-size: clamp(30px, 5.5vw, 52px);
+      font-weight: 800;
+      line-height: 1.3;
+      margin-bottom: 18px;
+      background: linear-gradient(90deg, #6bcb77, #4d96ff, #ffd93d);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .landing-desc {
+      font-size: clamp(14px, 2vw, 17px);
+      color: #a0a0b8;
+      line-height: 1.9;
+      max-width: 620px;
+      margin: 0 auto 44px;
+    }
+
+    .feature-label {
+      font-size: 14px;
+      color: #7a7a95;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 20px;
+      text-align: left;
+      max-width: 880px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      background: #1c1c2c;
+      border: 1px solid #2e2e44;
+      border-radius: 16px;
+      padding: 26px 22px;
+      cursor: pointer;
+      transition: 0.25s;
+    }
+    .feature-card:hover {
+      border-color: #4d96ff66;
+      transform: translateY(-5px);
+      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.4);
+    }
+    .feature-card.recap:hover { border-color: #ffd93d66; }
+    .feature-card.voice:hover { border-color: #6bcb7766; }
+
+    .feature-icon { font-size: 32px; margin-bottom: 12px; display: block; }
+    .feature-title { font-size: 18px; font-weight: 800; margin-bottom: 8px; }
+    .feature-card.fast .feature-title { color: #4d96ff; }
+    .feature-card.recap .feature-title { color: #ffd93d; }
+    .feature-card.voice .feature-title { color: #6bcb77; }
+
+    .feature-text {
+      font-size: 13px;
+      color: #9090a8;
+      line-height: 1.8;
+      margin-bottom: 14px;
+    }
+    .feature-cta {
+      font-size: 13px;
+      font-weight: 700;
+    }
+    .feature-card.fast .feature-cta { color: #4d96ff; }
+    .feature-card.recap .feature-cta { color: #ffd93d; }
+    .feature-card.voice .feature-cta { color: #6bcb77; }
+
+    /* ===== Workspace ===== */
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 22px;
+      background: #181826;
+      border-bottom: 1px solid #2a2a3e;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      flex-wrap: wrap;
+    }
+    .topbar-left { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    .back-btn {
+      background: #2a2a3e;
+      color: #e0e0e0;
+      border: none;
+      padding: 9px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .back-btn:hover { background: #3a3a52; }
+    .topbar-title { font-size: 17px; font-weight: 700; color: #e8e8f0; }
+    .mode-tag {
+      font-size: 11px;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 8px;
+    }
+    .mode-tag.fast { color: #4d96ff; background: #4d96ff1a; border: 1px solid #4d96ff44; }
+    .mode-tag.recap { color: #ffd93d; background: #ffd93d1a; border: 1px solid #ffd93d44; }
+    .mode-tag.voice { color: #6bcb77; background: #6bcb771a; border: 1px solid #6bcb7744; }
+    .model-tag {
+      font-size: 11px;
+      color: #6bcb77;
+      background: #6bcb771a;
+      border: 1px solid #6bcb7744;
+      padding: 3px 10px;
+      border-radius: 20px;
+      margin-left: 6px;
+    }
+
+    .workspace {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 22px;
+    }
+
+    .api-box {
+      background: #1c1c2c;
+      border: 1px solid #2e2e44;
+      padding: 14px 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .api-box label { font-size: 13px; color: #a0a0b8; }
+    .api-box input {
+      flex: 1;
+      min-width: 180px;
+      padding: 10px 14px;
+      background: #12121c;
+      border: 1px solid #3a3a52;
+      border-radius: 8px;
+      color: #e0e0e0;
+      font-size: 14px;
+      font-family: monospace;
+    }
+    .api-box input:focus { outline: none; border-color: #4d96ff; }
+
+    .mini-btn {
+      background: #2a2a3e;
+      color: #c0c0d8;
+      border: none;
+      padding: 9px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .mini-btn:hover { background: #3a3a52; color: #fff; }
+    .mini-btn.gold {
+      background: #ffd93d22;
+      color: #ffd93d;
+      border: 1px solid #ffd93d55;
+    }
+
+    /* Voice Box */
+    .voice-box {
+      background: #1c1c2c;
+      border: 1px solid #6bcb7744;
+      border-radius: 14px;
+      padding: 16px 18px;
+      margin-bottom: 20px;
+      display: none;
+    }
+    .voice-box.visible { display: block; animation: fadeIn 0.35s ease; }
+
+    .voice-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #6bcb77;
+      margin-bottom: 12px;
+    }
+
+    .voice-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    @media (max-width: 620px) { .voice-grid { grid-template-columns: 1fr; } }
+
+    .voice-option {
+      background: #12121c;
+      border: 2px solid #3a3a52;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: 0.25s;
+    }
+    .voice-option:hover { border-color: #6bcb7766; }
+    .voice-option.selected {
+      border-color: #6bcb77;
+      background: #6bcb7711;
+      box-shadow: 0 0 20px rgba(107, 203, 119, 0.15);
+    }
+    .voice-option input[type="radio"] {
+      width: 18px;
+      height: 18px;
+      accent-color: #6bcb77;
+      cursor: pointer;
+    }
+    .voice-avatar {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .voice-avatar.male { background: #4d96ff22; border: 1px solid #4d96ff55; }
+    .voice-avatar.female { background: #ff6b9d22; border: 1px solid #ff6b9d55; }
+
+    .voice-info { flex: 1; }
+    .voice-name { font-size: 14px; font-weight: 700; color: #e8e8f0; margin-bottom: 2px; }
+    .voice-desc { font-size: 11px; color: #8a8aa5; }
+
+    .voice-info-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #12121c;
+      border-radius: 10px;
+      font-size: 12px;
+      flex-wrap: wrap;
+    }
+    .speed-badge {
+      background: #6bcb7722;
+      color: #6bcb77;
+      border: 1px solid #6bcb7755;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+    }
+    .note { color: #8a8aa5; }
+
+    /* Panels */
+    .panel-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+    }
+    @media (max-width: 820px) { .panel-grid { grid-template-columns: 1fr; } }
+
+    .panel {
+      background: #1c1c2c;
+      border: 1px solid #2e2e44;
+      border-radius: 14px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+    }
+    .panel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .panel-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #e8e8f0;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #4d96ff; box-shadow: 0 0 8px #4d96ff; }
+    .dot.green { background: #6bcb77; box-shadow: 0 0 8px #6bcb77; }
+
+    select {
+      padding: 6px 12px;
+      background: #12121c;
+      color: #c0c0d8;
+      border: 1px solid #3a3a52;
+      border-radius: 6px;
+      font-size: 13px;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 380px;
+      padding: 14px;
+      background: #12121c;
+      border: 1px solid #2e2e44;
+      border-radius: 10px;
+      color: #e0e0e0;
+      font-size: 15px;
+      line-height: 1.8;
+      resize: vertical;
+      font-family: inherit;
+    }
+    textarea:focus { outline: none; border-color: #4d96ff; }
+
+    .char-count {
+      font-size: 12px;
+      color: #6a6a80;
+      text-align: right;
+      margin-top: 8px;
+    }
+
+    .action-row {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 22px;
+      flex-wrap: wrap;
+    }
+    .btn-translate {
+      padding: 15px 46px;
+      font-size: 16px;
+      font-weight: 800;
+      border: none;
+      border-radius: 40px;
+      color: #fff;
+      background: linear-gradient(90deg, #4d96ff, #6bcb77);
+      cursor: pointer;
+      transition: 0.25s;
+      font-family: inherit;
+      box-shadow: 0 8px 30px rgba(77, 150, 255, 0.3);
+    }
+    .btn-translate:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(107, 203, 119, 0.45);
+    }
+    .btn-translate:disabled { opacity: 0.55; cursor: not-allowed; }
+    .btn-translate.green {
+      background: linear-gradient(90deg, #6bcb77, #4d96ff);
+    }
+
+    .btn-clear {
+      padding: 15px 30px;
+      font-size: 15px;
+      font-weight: 700;
+      border: 1px solid #3a3a52;
+      border-radius: 40px;
+      color: #c0c0d8;
+      background: transparent;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-clear:hover { background: #2a2a3e; color: #fff; }
+
+    .status {
+      text-align: center;
+      margin-top: 16px;
+      font-size: 14px;
+      min-height: 22px;
+    }
+    .status.loading { color: #ffd93d; }
+    .status.error { color: #ff6b6b; }
+    .status.success { color: #6bcb77; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #ffd93d;
+      border-top-color: transparent;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Audio Result */
+    .audio-result {
+      background: #1c1c2c;
+      border: 1px solid #6bcb7744;
+      border-radius: 14px;
+      padding: 18px;
+      margin-top: 20px;
+      display: none;
+    }
+    .audio-result.visible { display: block; animation: fadeIn 0.4s ease; }
+
+    .audio-result-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: #6bcb77;
+      margin-bottom: 14px;
+    }
+
+    audio {
+      width: 100%;
+      margin-bottom: 14px;
+      border-radius: 10px;
+    }
+
+    .download-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .btn-download {
+      flex: 1;
+      min-width: 160px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      font-family: inherit;
+    }
+    .btn-download.mp3 {
+      background: linear-gradient(90deg, #6bcb77, #4d96ff);
+      color: #fff;
+    }
+    .btn-download.srt {
+      background: #ffd93d22;
+      color: #ffd93d;
+      border: 1px solid #ffd93d55;
+    }
+    .btn-download:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(107, 203, 119, 0.3);
+    }
+
+    .browser-warning {
+      background: #ff6b6b11;
+      border: 1px solid #ff6b6b44;
+      border-radius: 10px;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      font-size: 13px;
+      color: #ff9999;
+      line-height: 1.7;
+      display: none;
+    }
+    .browser-warning.visible { display: block; }
+  </style>
+</head>
+<body>
+
+  <!-- ================= LANDING ================= -->
+  <div id="landingPage" class="page active">
+    <div class="landing-wrap">
+      <span class="logo-badge">🎬 MOVIE RECAP TOOL</span>
+      <h1 class="landing-title">တရုတ် / အင်္ဂလိပ် စာသားများကို<br>မြန်မာလို ဘာသာပြန်ပါ</h1>
+      <p class="landing-desc">
+        Movie Recap ဗီဒီယိုများအတွက် အထူးပြုလုပ်ထားသော ဘာသာပြန်ကိရိယာ။
+        အောက်ပါ Mode ၃ မျိုးထဲမှ တစ်ခုကို ရွေးချယ်ပြီး စတင်ပါ။
+      </p>
+
+      <div class="feature-label">━ MODE ရွေးချယ်ပါ ━</div>
+
+      <div class="features">
+        <div class="feature-card fast" onclick="enterWorkspace('fast')">
+          <span class="feature-icon">⚡</span>
+          <div class="feature-title">မြန်ဆန်သည်</div>
+          <div class="feature-text">
+            ပုံမှန် ဘာသာပြန်ပုံစံ။ မြန်ဆန်ပြီး တိကျသော ဘာသာပြန်ချက် ရယူပါ။
+          </div>
+          <div class="feature-cta">စတင်မယ် →</div>
+        </div>
+
+        <div class="feature-card recap" onclick="enterWorkspace('recap')">
+          <span class="feature-icon">🎬</span>
+          <div class="feature-title">Recap Style</div>
+          <div class="feature-text">
+            မင်းသား/မင်းသမီး နာမည်များကို အလိုအလျောက် ပြောင်းပေးပြီး
+            သဘာဝအတိုင်း ထွက်သော စကားဖြင့် မြန်မာလို ပြန်ဆိုပါ။
+          </div>
+          <div class="feature-cta">စတင်မယ် →</div>
+        </div>
+
+        <div class="feature-card voice" onclick="enterWorkspace('voice')">
+          <span class="feature-icon">🔊</span>
+          <div class="feature-title">အသံထုတ်</div>
+          <div class="feature-text">
+            Browser ထဲမှာ Edge TTS ကို တိုက်ရိုက် သုံးပြီး
+            Thiha / Nilar အသံဖိုင် + SRT ထုတ်ပါ။ Backend မလိုပါ။
+          </div>
+          <div class="feature-cta">စတင်မယ် →</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= WORKSPACE ================= -->
+  <div id="workspacePage" class="page">
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="back-btn" onclick="exitWorkspace()">← နောက်သို့</button>
+        <span class="topbar-title">
+          📝 <span id="workspaceLabel">ဘာသာပြန်</span> Workspace
+          <span id="modeTag" class="mode-tag fast">မြန်ဆန်သည်</span>
+          <span class="model-tag" id="modelTag">Gemini 3.5 Flash Lite</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="workspace">
+
+      <!-- Browser warning -->
+      <div class="browser-warning" id="browserWarning">
+        ⚠️ <b>Microsoft Edge Browser</b> ကို သုံးပါ။ Edge TTS က Edge Browser မှာ အကောင်းဆုံး အလုပ်လုပ်ပါတယ်။
+        Chrome/Firefox မှာ WebSocket connection fail ဖြစ်နိုင်ပါတယ်။
+      </div>
+
+      <!-- API Key (translate mode) -->
+      <div class="api-box" id="apiBox">
+        <label>🔑 API Key:</label>
+        <input type="password" id="apiKey" placeholder="AIza... သင့် Gemini API Key ထည့်ပါ">
+        <button class="mini-btn" onclick="toggleKey()" id="toggleBtn">ပြရန်</button>
+      </div>
+
+      <!-- Voice Box -->
+      <div class="voice-box" id="voiceBox">
+        <div class="voice-title">🔊 အသံ ရွေးချယ်ပါ</div>
+        <div class="voice-grid">
+          <label class="voice-option selected" id="voiceThihaCard">
+            <input type="radio" name="voice" value="thiha" checked onchange="selectVoice('thiha')">
+            <div class="voice-avatar male">👨</div>
+            <div class="voice-info">
+              <div class="voice-name">Thiha (သိဟ)</div>
+              <div class="voice-desc">အမျိုးသား အသံ</div>
+            </div>
+          </label>
+          <label class="voice-option" id="voiceNilarCard">
+            <input type="radio" name="voice" value="nilar" onchange="selectVoice('nilar')">
+            <div class="voice-avatar female">👩</div>
+            <div class="voice-info">
+              <div class="voice-name">Nilar (နီလာ)</div>
+              <div class="voice-desc">အမျိုးသမီး အသံ</div>
+            </div>
+          </label>
+        </div>
+        <div class="voice-info-bar">
+          <span class="speed-badge">⚡ Speed 1.3x (Fast Vibe)</span>
+          <span class="note">Browser-based Edge TTS · Backend မလို</span>
+        </div>
+      </div>
+
+      <div class="panel-grid">
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">
+              <span class="dot"></span>
+              <span id="sourcePanelTitle">မူရင်းစာသား</span>
+            </span>
+            <select id="sourceLang">
+              <option value="auto">Auto Detect</option>
+              <option value="Chinese">တရုတ်</option>
+              <option value="English">အင်္ဂလိပ်</option>
+            </select>
+          </div>
+          <textarea id="sourceText" placeholder="ဒီနေရာမှာ စာသား ထည့်ပါ..."></textarea>
+          <div class="char-count" id="sourceCount">0 လုံး</div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <span class="panel-title">
+              <span class="dot green"></span>
+              <span id="resultPanelTitle">မြန်မာဘာသာပြန်</span>
+            </span>
+            <button class="mini-btn" onclick="copyResult()">📋 Copy</button>
+          </div>
+          <textarea id="resultText" placeholder="ရလဒ် ဒီနေရာမှာ ပေါ်လာပါမည်..." readonly></textarea>
+          <div class="char-count" id="resultCount">0 လုံး</div>
+        </div>
+      </div>
+
+      <div class="action-row">
+        <button class="btn-translate" id="translateBtn" onclick="translateText()">🌐 မြန်မာလို ဘာသာပြန်မယ်</button>
+        <button class="btn-translate green" id="voiceBtn" onclick="generateVoice()" style="display:none">🔊 အသံ + SRT ထုတ်မယ်</button>
+        <button class="btn-clear" onclick="clearAll()">🗑️ ရှင်းမယ်</button>
+      </div>
+
+      <div class="status" id="status"></div>
+
+      <div class="audio-result" id="audioResult">
+        <div class="audio-result-title">✅ အသံဖိုင် အဆင်သင့်ဖြစ်ပါပြီ</div>
+        <audio id="audioPlayer" controls></audio>
+        <div class="download-row">
+          <button class="btn-download mp3" onclick="downloadAudio()">⬇️ MP3 အသံဖိုင် ဒေါင်းလုပ်</button>
+          <button class="btn-download srt" onclick="downloadSrt()">⬇️ SRT ဖိုင် ဒေါင်းလုပ်</button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <script>
+    // ============ Config ============
+    const API_MODEL = 'gemini-3.5-flash-lite';
+    const API_BASE  = 'https://generativelanguage.googleapis.com/v1beta/models';
+
+    let currentMode = 'fast';
+    let selectedVoice = 'thiha';
+    let audioData = { base64: null, srt: null };
+
+    const DEFAULT_MALE   = 'ဂွေးတို';
+    const DEFAULT_FEMALE = 'ကြယ်စင်';
+
+    // ============ Page Navigation ============
+    function enterWorkspace(mode) {
+      currentMode = mode || 'fast';
+
+      const modeTag   = document.getElementById('modeTag');
+      const voiceBox  = document.getElementById('voiceBox');
+      const apiBox    = document.getElementById('apiBox');
+      const voiceBtn  = document.getElementById('voiceBtn');
+      const transBtn  = document.getElementById('translateBtn');
+      const srcSel    = document.getElementById('sourceLang');
+      const srcTitle  = document.getElementById('sourcePanelTitle');
+      const resTitle  = document.getElementById('resultPanelTitle');
+      const wsLabel   = document.getElementById('workspaceLabel');
+      const modelTag  = document.getElementById('modelTag');
+      const browserWarn = document.getElementById('browserWarning');
+
+      // Reset
+      voiceBox.classList.remove('visible');
+      apiBox.style.display = 'flex';
+      voiceBtn.style.display = 'none';
+      transBtn.style.display = 'inline-flex';
+      srcSel.style.display = 'inline-block';
+      browserWarn.classList.remove('visible');
+
+      // Browser check
+      const isEdge = /Edg\//.test(navigator.userAgent);
+      const isChrome = /Chrome\//.test(navigator.userAgent) && !isEdge;
+
+      if (currentMode === 'recap') {
+        modeTag.textContent = 'Recap Style';
+        modeTag.className = 'mode-tag recap';
+        wsLabel.textContent = 'ဘာသာပြန်';
+        modelTag.textContent = 'Gemini 3.5 Flash Lite';
+        srcTitle.textContent = 'မူရင်းစာသား';
+        resTitle.textContent = 'မြန်မာဘာသာပြန်';
+        transBtn.textContent = '🌐 မြန်မာလို ဘာသာပြန်မယ်';
+
+      } else if (currentMode === 'voice') {
+        modeTag.textContent = 'အသံထုတ်';
+        modeTag.className = 'mode-tag voice';
+        voiceBox.classList.add('visible');
+        wsLabel.textContent = 'အသံထုတ်';
+        modelTag.textContent = 'Edge TTS (Browser)';
+        srcTitle.textContent = 'မြန်မာစာသား (အသံထုတ်ရန်)';
+        resTitle.textContent = 'SRT Preview';
+        srcSel.style.display = 'none';
+        transBtn.style.display = 'none';
+        voiceBtn.style.display = 'inline-flex';
+
+        // Browser warning
+        if (!isEdge) {
+          browserWarn.classList.add('visible');
+        }
+
+      } else {
+        modeTag.textContent = 'မြန်ဆန်သည်';
+        modeTag.className = 'mode-tag fast';
+        wsLabel.textContent = 'ဘာသာပြန်';
+        modelTag.textContent = 'Gemini 3.5 Flash Lite';
+        srcTitle.textContent = 'မူရင်းစာသား';
+        resTitle.textContent = 'မြန်မာဘာသာပြန်';
+        transBtn.textContent = '🌐 မြန်မာလို ဘာသာပြန်မယ်';
+      }
+
+      document.getElementById('landingPage').classList.remove('active');
+      document.getElementById('workspacePage').classList.add('active');
+      window.scrollTo(0, 0);
+      history.pushState({ page: 'workspace', mode: currentMode }, '', '#workspace-' + currentMode);
+    }
+
+    function exitWorkspace() {
+      document.getElementById('workspacePage').classList.remove('active');
+      document.getElementById('landingPage').classList.add('active');
+      window.scrollTo(0, 0);
+      history.pushState({ page: 'landing' }, '', '#');
+    }
+
+    window.addEventListener('popstate', (e) => {
+      if (e.state?.page === 'workspace') enterWorkspace(e.state.mode || 'fast');
+      else {
+        document.getElementById('workspacePage').classList.remove('active');
+        document.getElementById('landingPage').classList.add('active');
+      }
+    });
+
+    // ============ Elements ============
+    const sourceText  = document.getElementById('sourceText');
+    const resultText  = document.getElementById('resultText');
+    const statusEl    = document.getElementById('status');
+    const sourceCount = document.getElementById('sourceCount');
+    const resultCount = document.getElementById('resultCount');
+    const apiKeyInput = document.getElementById('apiKey');
+
+    // ============ API Key ============
+    apiKeyInput.value = localStorage.getItem('gemini_api_key') || '';
+    apiKeyInput.addEventListener('input', () => {
+      localStorage.setItem('gemini_api_key', apiKeyInput.value.trim());
+    });
+
+    sourceText.addEventListener('input', () => {
+      sourceCount.textContent = sourceText.value.length + ' လုံး';
+    });
+    resultText.addEventListener('input', () => {
+      resultCount.textContent = resultText.value.length + ' လုံး';
+    });
+
+    function toggleKey() {
+      const inp = apiKeyInput;
+      const btn = document.getElementById('toggleBtn');
+      if (inp.type === 'password') { inp.type = 'text'; btn.textContent = 'ဖျောက်ရန်'; }
+      else { inp.type = 'password'; btn.textContent = 'ပြရန်'; }
+    }
+
+    function setStatus(msg, type = '') {
+      statusEl.className = 'status ' + type;
+      statusEl.innerHTML = msg;
+    }
+
+    function clearAll() {
+      sourceText.value = '';
+      resultText.value = '';
+      sourceCount.textContent = '0 လုံး';
+      resultCount.textContent = '0 လုံး';
+      setStatus('');
+      document.getElementById('audioResult').classList.remove('visible');
+    }
+
+    async function copyResult() {
+      if (!resultText.value) return;
+      try {
+        await navigator.clipboard.writeText(resultText.value);
+        setStatus('✅ Copy လုပ်ပြီးပါပြီ', 'success');
+        setTimeout(() => setStatus(''), 2000);
+      } catch (e) {
+        setStatus('❌ Copy မလုပ်နိုင်ပါ', 'error');
+      }
+    }
+
+    function selectVoice(voice) {
+      selectedVoice = voice;
+      document.getElementById('voiceThihaCard').classList.toggle('selected', voice === 'thiha');
+      document.getElementById('voiceNilarCard').classList.toggle('selected', voice === 'nilar');
+    }
+
+    // ============ Prompt Builders (Translation) ============
+    function buildFastPrompt(text, srcLang) {
+      const langHint = srcLang === 'auto'
+        ? 'မူရင်းစာသားသည် တရုတ် သို့မဟုတ် အင်္ဂလိပ် ဖြစ်နိုင်သည်။ ဘာသာစကားကို ကိုယ်တိုင်ခွဲခြားပါ။'
+        : `မူရင်းဘာသာစကားသည် ${srcLang === 'Chinese' ? 'တရုတ်' : 'အင်္ဂလိပ်'} ဖြစ်သည်။`;
+
+      return `သင်သည် Movie Recap ဗီဒီယိုများအတွက် ကျွမ်းကျင်သော ဘာသာပြန်သမားတစ်ဦးဖြစ်သည်။
+${langHint}
+
+အောက်ပါ မူရင်းစာသားကို သဘာဝကျသော မြန်မာဘာသာဖြင့် ဘာသာပြန်ပေးပါ။
+
+လိုက်နာရမည့် အချက်များ:
+1. မြန်ဆန်ပြီး တိကျသော ဘာသာပြန်ချက် ပေးပါ။
+2. မူရင်းအဓိပ္ပာယ် မပျောက်စေရန်။
+3. ဘာသာပြန်ချက်သာ ပြန်ပေးပါ။ ရှင်းလင်းချက် မထည့်ပါနှင့်။
+
+မူရင်းစာသား:
+"""
+${text}
+"""
+
+မြန်မာဘာသာပြန်:`;
+    }
+
+    function buildRecapPrompt(text, srcLang) {
+      const langHint = srcLang === 'auto'
+        ? 'မူရင်းစာသားသည် တရုတ် သို့မဟုတ် အင်္ဂလိပ် ဖြစ်နိုင်သည်။ ဘာသာစကားကို ကိုယ်တိုင်ခွဲခြားပါ။'
+        : `မူရင်းဘာသာစကားသည် ${srcLang === 'Chinese' ? 'တရုတ်' : 'အင်္ဂလိပ်'} ဖြစ်သည်။`;
+
+      const maleName   = localStorage.getItem('recap_male') || DEFAULT_MALE;
+      const femaleName = localStorage.getItem('recap_female') || DEFAULT_FEMALE;
+
+      let charSection = `\n★★★ မဖြစ်မနေ လိုက်နာရမည့် ဇာတ်ကောင်နာမည် စာရင်း ★★★\n\n`;
+      charSection += `• မင်းသား (male lead /男主角) → "${maleName}"\n`;
+      charSection += `• မင်းသမီး (female lead /女主角) → "${femaleName}"\n`;
+      charSection += `• "သူ" / "သူမ" ဆိုတဲ့ နေရာမှာလည်း သက်ဆိုင်ရာ ဇာတ်ကောင်အမည်ကို ထည့်ပါ။\n\n`;
+      charSection += `★ မူရင်းစာသားထဲမှာ ဇာတ်ကောင်နာမည်တွေ ပေါ်လာရင် မြန်မာအမည်တွေနဲ့ အစားထိုးပါ။\n`;
+      charSection += `★ ဇာတ်ကောင်တွေရဲ့ စကားပြောပုံစံကို မြန်မာလူမျိုးတွေ နေ့စဉ်ပြောနေကျ သဘာဝကျတဲ့ စကားနဲ့ ပြန်ဆိုပါ။\n`;
+
+      return `သင်သည် Movie Recap ဗီဒီယိုများအတွက် အထူးကျွမ်းကျင်သော မြန်မာ ဘာသာပြန်သမားတစ်ဦးဖြစ်သည်။
+${langHint}
+${charSection}
+လိုက်နာရမည့် အချက်များ:
+1. Movie Recap ပုံစံနှင့် ကိုက်ညီအောင် သဘာဝကျကျ၊ စီးဆင်းမှုကောင်းမွန်စွာ ပြန်ဆိုပါ။
+2. ဇာတ်ကောင်များ ပြောသော စကားများကို သဘာဝကျသော စကားပြောပုံစံဖြင့် ပြန်ဆိုပါ။
+3. မူရင်းအဓိပ္ပာယ် မပျောက်စေရန်။
+4. ဘာသာပြန်ချက်သာ ပြန်ပေးပါ။
+
+မူရင်းစာသား:
+"""
+${text}
+"""
+
+မြန်မာဘာသာပြန် (Recap Style):`;
+    }
+
+    // ============ Translate ============
+    async function translateText() {
+      const text   = sourceText.value.trim();
+      const apiKey = apiKeyInput.value.trim();
+
+      if (!apiKey) { setStatus('⚠️ Gemini API Key ထည့်ပါ', 'error'); apiKeyInput.focus(); return; }
+      if (!text)   { setStatus('⚠️ မူရင်းစာသား ထည့်ပါ', 'error'); sourceText.focus(); return; }
+
+      const srcLang = document.getElementById('sourceLang').value;
+      document.getElementById('translateBtn').disabled = true;
+      setStatus('<span class="spinner"></span> ဘာသာပြန်နေသည်...', 'loading');
+      resultText.value = '';
+
+      try {
+        const url = `${API_BASE}/${API_MODEL}:generateContent?key=${encodeURIComponent(apiKey)}`;
+        const prompt = currentMode === 'recap'
+          ? buildRecapPrompt(text, srcLang)
+          : buildFastPrompt(text, srcLang);
+
+        const response = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: currentMode === 'recap' ? 0.9 : 0.7,
+              topP: 0.95, topK: 40, maxOutputTokens: 8192
+            }
+          })
+        });
+
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({}));
+          throw new Error(err?.error?.message || `HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+        const translated = data?.candidates?.[0]?.content?.parts
+          ?.map(p => p.text || '').join('').trim();
+
+        if (!translated) throw new Error('ဘာသာပြန်ချက် မရရှိပါ');
+
+        resultText.value = translated;
+        resultCount.textContent = translated.length + ' လုံး';
+        setStatus('✅ ဘာသာပြန် ပြီးပါပြီ', 'success');
+
+      } catch (error) {
+        console.error(error);
+        setStatus('❌ Error: ' + error.message, 'error');
+      } finally {
+        document.getElementById('translateBtn').disabled = false;
+      }
+    }
+
+    // ============================================================
+    // 🎙️ EDGE TTS — BROWSER-BASED
+    // ============================================================
+
+    const TRUSTED_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
+    const VOICE_MAP = {
+      thiha: 'my-MM-ThihaNeural',
+      nilar: 'my-MM-NilarNeural'
+    };
+    const RATE = '+30%';
+
+    function generateUUID() {
+      return 'xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx'.replace(/x/g, () =>
+        Math.floor(Math.random() * 16).toString(16)
+      );
+    }
+
+    function escapeXml(str) {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&apos;');
+    }
+
+    function srtTime(seconds) {
+      const h = String(Math.floor(seconds / 3600)).padStart(2, '0');
+      const m = String(Math.floor((seconds % 3600) / 60)).padStart(2, '0');
+      const s = String(Math.floor(seconds % 60)).padStart(2, '0');
+      const ms = String(Math.floor((seconds % 1) * 1000)).padStart(3, '0');
+      return `${h}:${m}:${s},${ms}`;
+    }
+
+    function buildSrt(segments) {
+      let srt = '';
+      let index = 1;
+      for (const seg of segments) {
+        srt += `${index}\n${srtTime(seg.start)} --> ${srtTime(seg.end)}\n${seg.text}\n\n`;
+        index++;
+      }
+      return srt;
+    }
+
+    async function edgeTTSSynthesize(text, voiceName) {
+      return new Promise((resolve, reject) => {
+        const connectionId = generateUUID();
+        const wsUrl = `wss://speech.platform.bing.com/consumer/speech/synthesize/readaloud/edge/v1?TrustedClientToken=${TRUSTED_TOKEN}&ConnectionId=${connectionId}`;
+
+        const audioChunks = [];
+        let resolved = false;
+        let ws;
+
+        try {
+          ws = new WebSocket(wsUrl);
+        } catch (e) {
+          reject(new Error('WebSocket မဖွင့်နိုင်ပါ: ' + e.message));
+          return;
+        }
+
+        ws.binaryType = 'arraybuffer';
+
+        const timeout = setTimeout(() => {
+          if (!resolved) {
+            resolved = true;
+            try { ws.close(); } catch (e) {}
+            reject(new Error('Timeout — Edge TTS server က ပြန်မဖြေပါ'));
+          }
+        }, 60000);
+
+        ws.onopen = () => {
+          const timestamp = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+          // 1. speech.config
+          const configMsg =
+            `X-Timestamp:${timestamp}\r\n` +
+            `Content-Type:application/json; charset=utf-8\r\n` +
+            `Path:speech.config\r\n\r\n` +
+            `{"context":{"synthesis":{"audio":{"metadataoptions":{"sentenceBoundaryEnabled":"false","wordBoundaryEnabled":"true"},"outputFormat":"audio-24khz-48kbitrate-mono-mp3"}}}}`;
+
+          ws.send(configMsg);
+
+          // 2. SSML
+          const ssml =
+            `<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' xml:lang='my-MM'>` +
+            `<voice name='${voiceName}'>` +
+            `<prosody rate='${RATE}' pitch='+0Hz' volume='+0%'>${escapeXml(text)}</prosody>` +
+            `</voice></speak>`;
+
+          const ssmlMsg =
+            `X-RequestId:${connectionId}\r\n` +
+            `Content-Type:application/ssml+xml\r\n` +
+            `X-Timestamp:${timestamp}\r\n` +
+            `Path:ssml\r\n\r\n` +
+            ssml;
+
+          ws.send(ssmlMsgime);
+        };
+
+        ws.onmessage = ()event) => {
+          if (typeof event.data {
+ === 'string') {
+            // Text      message — turn.end ကို စောင့ const်
+            if (event.data.includes('Path:turn.end')) {
+              if (!resolved) {
+                resolved = true;
+                clearTimeout(timeout);
+                try { ws.close(); } catch (e) {}
+                resolve(audioChunks);
+              }
+            }
+          } else {
+            // Binary — audio chunk
+            const buffer = event.data;
+            if (buffer.byteLength > 2) {
+              const headerLength = new DataView(buffer).getUint16(0, false);
+              if (buffer.byteLength > 2 + headerLength) {
+                audioChunks.push(buffer.slice(2 + headerLength));
+              }
+            }
+          }
+        };
+
+        ws.onerror = (err) => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            reject(new Error('WebSocket error — Edge Browser သုံးပါ'));
+          }
+        };
+
+        ws.onclose = () => {
+          if (!resolved) {
+            resolved = true;
+            clearTimeout(timeout);
+            if (audioChunks.length === 0) {
+              reject(new Error('WebSocket closed — audio မရရှိပါ'));
+            } else {
+              resolve(audioChunks);
+            }
+          }
+        };
+      });
+    }
+
+    async function generateVoice() {
+      const text = sourceText.value.trim();
+
+      if (!text) {
+        setStatus('⚠️ အသံထုတ်ရန် စာသား ထည့်ပါ', 'error');
+        sourceText.focus();
+        return;
+      }
+
+      const voiceBtn = document.getElementById('voiceBtn');
+      voiceBtn.disabled = true;
+      setStatus('<span class="spinner"></span> အသံထုတ်နေသည်...', 'loading');
+      resultText.value = '';
+      document.getElementById('audioResult').classList.remove('visible');
+
+      try {
+        const voiceName = VOICE_MAP[selectedVoice] || VOICE_MAP.thiha;
+
+        // စာကြောင်းခွဲ
+        const lines = text
+          .split(/(?<=[။!?\n])/g)
+          .map(l => l.trim())
+          .filter(l => l.length > 0);
+
+        if (lines.length === 0) {
+          throw new Error('စာကြောင်း မရှိပါ');
+        }
+
+        setStatus(`<span class="spinner"></span> စာကြောင်း ${lines.length} ခု ထုတ်နေသည်...`, 'loading');
+
+        const audioParts = [];
+        const segments = [];
+        let currentTime = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+
+          try {
+            const chunks = await edgeTTSSynthesize(line, voiceName);
+
+            for (const chunk of chunks) {
+              audioParts.push(new Uint8Array(chunk));
+            }
+
+            const charCount = line.replace(/\s/g, '').length;
+            const duration = Math.max(charCount / 6.5, 1.2);
+
+            segments.push({
+              start: currentTime,
+              end: currentTime + duration,
+              text: line
+            });
+            currentTime += duration;
+
+          } catch (lineErr) {
+            console.error('Line error:', lineErr);
+            // ကျော်
+            continue;
+          }
+        }
+
+        if (audioParts.length === 0) {
+          throw new Error('အသံထုတ်ခြင်း မအောင်မြင်ပါ — Edge Browser သုံးပါ');
+        }
+
+        // Audio ပေါင်း
+        const totalLength = audioParts.reduce((sum, b) => sum + b.byteLength, 0);
+        const finalAudio = new Uint8Array(totalLength);
+        let offset = 0;
+        for (const part of audioParts) {
+          finalAudio.set(part, offset);
+          offset += part.byteLength;
+        }
+
+        // SRT
+        const srt = buildSrt(segments);
+
+        // Audio → Base64
+        let binary = '';
+        const chunkSize = 0x8000;
+        for (let i = 0; i < finalAudio.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, finalAudio.subarray(i, i + chunkSize));
+        }
+        const base64 = btoa(binary);
+
+        audioData.base64 = base64;
+        audioData.srt = srt;
+
+        // Audio Blob + Player
+        const blob = new Blob([finalAudio], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        const player = document.getElementById('audioPlayer');
+        player.src = url;
+        player.playbackRate = 1.3;
+        player.addEventListener('loadedmetadata', () => {
+          player.playbackRate = 1.3;
+        });
+
+        // SRT preview
+        resultText.value = srt;
+        resultCount.textContent = srt.length + ' လုံး';
+
+        document.getElementById('audioResult').classList.add('visible');
+
+        setStatus(`✅ အသံထုတ်ပြီးပါပြီ · ${currentTime.toFixed(1)} စက္ကန့် · Speed 1.3x`, 'success');
+
+      } catch (error) {
+        console.error(error);
+        let msg = error.message || 'Error';
+
+        if (msg.includes('WebSocket') || msg.includes('closed')) {
+          msg = 'WebSocket မချိတ်နိုင်ပါ — <b>Microsoft Edge Browser</b> သုံးပါ။ Chrome/Firefox မှာ Microsoft က block လုပ်ထားသည်။';
+        } else if (msg.includes('Timeout')) {
+          msg = 'Timeout — Edge TTS server က မဖြေပါ။ ထပ်စမ်းပါ။';
+        }
+
+        setStatus('❌ ' + msg, 'error');
+      } finally {
+        voiceBtn.disabled = false;
+      }
+    }
+
+    // ============ Download ============
+    function base64ToBlob(base64, m byteChars = atob(base64);
+      const byteNums = new Array(byteChars.length);
+      for (let i = 0; i < byteChars.length; i++) {
+        byteNums[i] = byteChars.charCodeAt(i);
+      }
+      return new Blob([new Uint8Array(byteNums)], { type: mime });
+    }
+
+    function downloadAudio() {
+      if (!audioData.base64) return;
+      const blob = base64ToBlob(audioData.base64, 'audio/mpeg');
+      triggerDownload(blob, `recap_${selectedVoice}_${Date.now()}.mp3`);
+    }
+
+    function downloadSrt() {
+      if (!audioData.srt) return;
+      const blob = new Blob([audioData.srt], { type: 'text/plain;charset=utf-8' });
+      triggerDownload(blob, `recap_${selectedVoice}_${Date.now()}.srt`);
+    }
+
+    function triggerDownload(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 5000);
+    }
+
+    sourceText.addEventListener('keydown', (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        if (currentMode === 'voice') generateVoice();
+        else translateText();
+      }
+    });
+
+    if (location.hash === '#workspace-fast') enterWorkspace('fast');
+    else if (location.hash === '#workspace-recap') enterWorkspace('recap');
+    else if (location.hash === '#workspace-voice') enterWorkspace('voice');
+  </script>
+</body>
+</html>
