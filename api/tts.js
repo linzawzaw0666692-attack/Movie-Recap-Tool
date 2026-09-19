@@ -1,38 +1,35 @@
-// api/tts.js — Vercel Serverless Function
-export const config = { runtime: 'edge' };
-
 const TRUSTED_CLIENT_TOKEN = '6A5AA1D4EAFF4E9FB37E23D68491D6F4';
 const VOICES = {
   thiha: 'my-MM-ThihaNeural',
   nilar: 'my-MM-NilarNeural'
 };
 
-export default async function handler(req) {
-  if (req.method !== 'POST') {
-    return new Response(JSON.stringify({ error: 'POST only' }), { status: 405 });
-  }
+module.exports = async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'POST') return res.status(405).json({ error: 'POST only' });
 
   try {
-    const { text, voice } = await req.json();
-    if (!text) {
-      return new Response(JSON.stringify({ error: 'No text' }), { status: 400 });
-    }
+    const { text, voice } = req.body || {};
+    if (!text) return res.status(400).json({ error: 'No text provided' });
 
     const voiceName = VOICES[voice] || VOICES.thiha;
     const result = await edgeTTS(text, voiceName);
-
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json' }
-    });
+    return res.status(200).json(result);
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), { status: 500 });
+    console.error('TTS Error:', e);
+    return res.status(500).json({ error: e.message });
   }
-}
+};
 
 async function edgeTTS(text, voiceName) {
-  // Sec-MS-GEC token
-  const secMsGec = await generateSecMsGec();
+  const { WebSocket } = require('ws');
+  const crypto = require('crypto');
+
+  const secMsGec = generateSecMsGec(crypto);
   const connectionId = crypto.randomUUID().replace(/-/g, '');
   const requestId = crypto.randomUUID().replace(/-/g, '');
 
@@ -44,9 +41,6 @@ async function edgeTTS(text, voiceName) {
     </voice>
   </speak>`;
 
-  // Node.js WebSocket
-  const { WebSocket } = await import('ws');
-
   return new Promise((resolve, reject) => {
     const ws = new WebSocket(wsUrl);
     const audioChunks = [];
@@ -55,7 +49,7 @@ async function edgeTTS(text, voiceName) {
 
     const timeout = setTimeout(() => {
       try { ws.close(); } catch (e) {}
-      reject(new Error('Timeout'));
+      reject(new Error('TTS timeout'));
     }, 30000);
 
     ws.on('open', () => {
@@ -74,6 +68,7 @@ async function edgeTTS(text, voiceName) {
         if (audio.length > 0) audioChunks.push(audio);
       } else {
         const msg = data.toString();
+
         if (msg.includes('Path:audio.metadata')) {
           try {
             const jsonStart = msg.indexOf('{');
@@ -116,39 +111,41 @@ async function edgeTTS(text, voiceName) {
       reject(err);
     });
 
-    ws.on('close', () => {
-      clearTimeout(timeout);
-    });
+    ws.on('close', () => clearTimeout(timeout));
   });
 }
 
-async function generateSecMsGec() {
+function generateSecMsGec(crypto) {
   const WIN_EPOCH = 11644473600n;
   const S_TO_NS = 10000000n;
   let ticks = BigInt(Math.floor(Date.now() / 1000)) + WIN_EPOCH;
   ticks = ticks * S_TO_NS;
   const rounded = (ticks / (300n * S_TO_NS)) * (300n * S_TO_NS);
   const str = rounded.toString() + TRUSTED_CLIENT_TOKEN;
-
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
+  return crypto.createHash('sha256').update(str).digest('hex').toUpperCase();
 }
 
 function escapeXml(s) {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;').replace(/'/g, '&apos;');
+  return s.replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&apos;');
 }
 
 function formatSrt(lines) {
-  return lines.map(l => `${l.index}\n${fmt(l.start)} --> ${fmt(l.end)}\n${l.text}\n`).join('\n');
+  return lines.map(l =>
+    `${l.index}\n${fmt(l.start)} --> ${fmt(l.end)}\n${l.text}\n`
+  ).join('\n');
 }
+
 function fmt(sec) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = Math.floor(sec % 60);
   const ms = Math.floor((sec - Math.floor(sec)) * 1000);
-  return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')},${String(ms).padStart(3,'0')}`;
+  return `${pad(h)}:${pad(m)}:${pad(s)},${pad3(ms)}`;
 }
+
+function pad(n) { return String(n).padStart(2, '0'); }
+function pad3(n) { return String(n).padStart(3, '0'); }
